@@ -1,0 +1,166 @@
+@reference "../../styles/globals.css";
+
+.oauth-page {
+  @apply flex h-screen overflow-hidden bg-background;
+}
+
+.oauth-page__main {
+  @apply flex-1 ml-64 overflow-y-auto p-8 lg:p-12;
+}
+
+.oauth-page__content {
+  @apply max-w-4xl mx-auto space-y-8;
+}
+
+.oauth-header {
+  @apply flex items-center justify-between;
+}
+
+.oauth-header__title {
+  @apply text-3xl font-black tracking-tight uppercase text-on-surface m-0;
+}
+
+.oauth-header__subtitle {
+  @apply text-on-surface-variant font-mono text-sm mt-2 m-0;
+}
+
+.oauth-header__connection {
+  @apply flex items-center gap-4 bg-surface-container-high p-4 border border-outline-variant rounded-md;
+}
+
+.oauth-header__icon {
+  @apply w-10 h-10 bg-primary rounded;
+}
+
+.oauth-header__icon--github {
+  @apply w-10 h-10 bg-on-surface rounded;
+}
+
+.oauth-grid {
+  @apply grid grid-cols-1 lg:grid-cols-12 gap-8;
+}
+
+.oauth-auth-card {
+  @apply lg:col-span-7 bg-surface-container-low border border-outline-variant p-8 relative overflow-hidden rounded-xl;
+}
+
+.oauth-auth-card__id {
+  @apply absolute top-0 right-0 p-2 text-[8px] font-mono opacity-20 select-none;
+}
+
+.oauth-auth-card__title {
+  @apply text-xl font-bold mb-6 m-0;
+}
+
+.oauth-auth-card__title-highlight {
+  @apply text-primary;
+}
+
+.oauth-auth-card__desc {
+  @apply text-on-surface-variant mb-8 leading-relaxed m-0;
+}
+
+.oauth-permissions {
+  @apply space-y-4 mb-8 list-none p-0;
+}
+
+.oauth-permission {
+  @apply flex items-start gap-4;
+}
+
+.oauth-permission__icon {
+  @apply text-primary mt-0.5;
+}
+
+.oauth-permission__title {
+  @apply font-bold block m-0;
+}
+
+.oauth-permission__desc {
+  @apply text-sm text-on-surface-variant leading-tight block;
+}
+
+.oauth-actions {
+  @apply flex gap-4;
+}
+
+.oauth-actions__btn-primary {
+  @apply flex-1 bg-primary text-white py-3 rounded-md font-bold uppercase tracking-widest hover:bg-primary-container transition-colors active:translate-y-0.5 border-none cursor-pointer;
+}
+
+.oauth-actions__btn-secondary {
+  @apply px-6 border border-outline py-3 rounded-md font-bold uppercase text-on-surface-variant hover:bg-surface-variant transition-colors flex items-center justify-center cursor-pointer no-underline bg-transparent;
+}
+
+.oauth-terms {
+  @apply mt-8 pt-6 border-t border-outline-variant;
+}
+
+.oauth-terms__text {
+  @apply text-xs font-mono text-on-surface-variant leading-tight m-0;
+}
+
+.oauth-terms__link {
+  @apply text-primary underline;
+}
+
+.oauth-sidebar {
+  @apply lg:col-span-5 flex flex-col gap-6;
+}
+
+.oauth-bot-instructions {
+  @apply bg-on-surface text-surface-bright p-6 border-l-4 border-primary rounded-xl rounded-l-none;
+}
+
+.oauth-bot-instructions__header {
+  @apply flex items-center gap-3 mb-4;
+}
+
+.oauth-bot-instructions__icon {
+  @apply text-primary;
+}
+
+.oauth-bot-instructions__title {
+  @apply font-black uppercase tracking-wider text-sm m-0;
+}
+
+.oauth-bot-instructions__steps {
+  @apply space-y-6;
+}
+
+.oauth-bot-step {
+  @apply relative pl-8 border-l border-white/20;
+}
+
+.oauth-bot-step__badge {
+  @apply absolute -left-[9px] top-0 w-4 h-4 bg-primary flex items-center justify-center text-[10px] font-bold rounded-full text-white;
+}
+
+.oauth-bot-step__id {
+  @apply text-sm font-mono opacity-90 mb-1 m-0;
+}
+
+.oauth-bot-step__desc {
+  @apply font-bold text-primary-fixed m-0;
+}
+
+.oauth-secure-module {
+  @apply relative h-48 bg-tertiary-container overflow-hidden border border-outline-variant rounded-xl;
+}
+
+.oauth-secure-module__bg {
+  @apply absolute inset-0 opacity-40 mix-blend-overlay bg-cover bg-center;
+  background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAVFPQ_Jsuh_jIr7SIWy7ktpZSmJ6O5K-y3JHPJe8mHrhno1tFtPvRXyvTmprYAkzTZJyWFBqzskHE3_hoMzdUrcuwadyJBnITsl1wOTKEwTDIFD3EK1En8CVYjfCqcHzQBzthjMBI6uMfeaAGJdizdcN6vbZbSjzpv1FVdyQ0pGJjmzipbweZTedh93Ox1SOHzWMOBCotm-ATw1vIN0_85B3wOgerrwaHmbob-GO8X3J3K4ZCtAvcu8mNKNZwbWd1GXhxGbktYrP-Q');
+}
+
+.oauth-secure-module__overlay {
+  @apply absolute inset-0 bg-gradient-to-t from-black/60 to-transparent p-6 flex flex-col justify-end;
+}
+
+.oauth-secure-module__label {
+  @apply text-[10px] font-mono text-primary-fixed uppercase tracking-[0.2em] mb-1;
+}
+
+.oauth-secure-module__title {
+  @apply font-black text-white uppercase text-lg leading-tight m-0;
+}

@@ -1,0 +1,12 @@
+@reference "../../styles/globals.css";
+.tg-modal-backdrop {
+  @apply fixed inset-0 z-50 flex items-center justify-center bg-[color-mix(in_srgb,var(--color-surface)_80%,transparent)] backdrop-blur-sm p-4;
+}
+
+.tg-modal {
+  @apply w-full max-w-lg bg-[var(--color-surface-container-lowest)] rounded-[2.5rem] border border-[var(--color-outline-variant)] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.3)] p-10;
+}
+
+.tg-modal__step {
+  @apply flex gap-5 items-start bg-[color-mix(in_srgb,var(--color-surface-container-low)_40%,transparent)] p-5 rounded-2xl border border-[color-mix(in_srgb,var(--color-outline-variant)_30%,transparent)] transition-all hover:border-[var(--color-primary)];
+}
