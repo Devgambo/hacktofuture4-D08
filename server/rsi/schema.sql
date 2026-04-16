@@ -252,3 +252,34 @@ BEGIN
 EXCEPTION WHEN others THEN NULL;
 END;
 $$;
+
+-- ─────────────────────────────────────────────────────────
+-- CD Failure Monitoring
+-- ─────────────────────────────────────────────────────────
+
+-- Per-repo CD config (which provider, what IDs to query)
+CREATE TABLE IF NOT EXISTS cd_provider_config (
+    repo_full_name TEXT PRIMARY KEY,
+    provider       TEXT NOT NULL DEFAULT 'custom',   -- aws | azure | gcp | custom
+    config         JSONB NOT NULL DEFAULT '{}',       -- log_group, cluster, etc.
+    enabled        BOOLEAN NOT NULL DEFAULT true,
+    created_at     TIMESTAMPTZ DEFAULT now(),
+    updated_at     TIMESTAMPTZ DEFAULT now()
+);
+
+-- Failure history with diagnosis
+CREATE TABLE IF NOT EXISTS cd_failure_history (
+    id              SERIAL PRIMARY KEY,
+    job_id          TEXT UNIQUE NOT NULL,
+    repo_full_name  TEXT NOT NULL,
+    service         TEXT NOT NULL,
+    environment     TEXT NOT NULL,
+    provider        TEXT NOT NULL,
+    status          TEXT NOT NULL,
+    error_message   TEXT,
+    error_logs      TEXT,
+    diagnosis       JSONB,                            -- LLM-generated report
+    severity        TEXT,
+    trigger_source  TEXT DEFAULT 'webhook',           -- webhook | github_deployment
+    created_at      TIMESTAMPTZ DEFAULT now()
+);

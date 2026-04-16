@@ -52,6 +52,24 @@ class Settings(BaseSettings):
     telegram_webhook_url: str = ""
     telegram_allowed_user_ids: str = ""
 
+    # ── CD Monitoring ─────────────────────────────────────
+    cd_webhook_secret: str = ""
+
+    # AWS (optional)
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
+    aws_region: str = "us-east-1"
+
+    # Azure (optional)
+    azure_tenant_id: str = ""
+    azure_client_id: str = ""
+    azure_client_secret: str = ""
+    azure_subscription_id: str = ""
+
+    # GCP (optional)
+    gcp_project_id: str = ""
+    google_application_credentials: str = ""
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
     @property
