@@ -1,0 +1,134 @@
+@reference "../../styles/globals.css";
+
+.init-page {
+  @apply flex h-screen overflow-hidden bg-background;
+}
+
+.init-page__main {
+  @apply flex-1 lg:ml-64 relative bg-dot-pattern overflow-y-auto;
+}
+
+.init-content {
+  @apply max-w-6xl mx-auto px-8 py-12 flex flex-col items-center justify-center min-h-[calc(100vh-64px)];
+}
+
+.init-box-wrapper {
+  @apply relative w-full max-w-4xl;
+}
+
+.init-box-glow {
+  @apply absolute -inset-4 bg-primary/5 rounded-3xl blur-2xl;
+}
+
+.init-box {
+  @apply relative bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm flex flex-col md:flex-row;
+}
+
+.init-box__left {
+  @apply w-full md:w-2/5 p-8 bg-surface-container-low flex flex-col justify-center items-center border-b md:border-b-0 md:border-r border-outline-variant;
+}
+
+.init-icon-container {
+  @apply relative w-48 h-48 mb-6;
+}
+
+.init-icon-ring {
+  @apply absolute inset-0 border-2 border-dashed border-primary/20 rounded-full animate-pulse;
+}
+
+.init-icon-solid {
+  @apply absolute inset-4 border-2 border-primary/40 rounded-full;
+}
+
+.init-icon-inner {
+  @apply absolute inset-0 flex items-center justify-center;
+}
+
+.init-icon {
+  @apply text-6xl text-primary;
+  font-variation-settings: 'FILL' 1;
+}
+
+.init-status {
+  @apply space-y-2 text-center flex flex-col items-center;
+}
+
+.init-status__badge {
+  @apply px-3 py-1 bg-tertiary-container text-white text-[10px] font-bold tracking-widest uppercase rounded-full;
+}
+
+.init-status__text {
+  @apply text-xs text-on-surface-variant font-medium italic m-0;
+}
+
+.init-box__right {
+  @apply w-full md:w-3/5 p-10 flex flex-col justify-center;
+}
+
+.init-title {
+  @apply text-3xl font-black text-on-surface tracking-tighter mb-4 leading-tight m-0;
+}
+
+.init-title__highlight {
+  @apply text-primary;
+}
+
+.init-desc {
+  @apply text-on-surface-variant leading-relaxed mb-8;
+}
+
+.init-actions {
+  @apply space-y-4 flex flex-col gap-4;
+}
+
+.init-btn-primary {
+  @apply w-full flex items-center justify-between bg-primary text-white px-6 py-4 rounded-md font-bold hover:bg-primary-container transition-all active:scale-[0.98] border-none cursor-pointer;
+}
+
+.init-btn-primary__content {
+  @apply flex items-center gap-3 uppercase tracking-tighter;
+}
+
+.init-btn-primary__icon {
+  @apply group-hover:rotate-12 transition-transform;
+}
+
+.init-btn-secondary {
+  @apply w-full flex items-center justify-center gap-3 bg-surface-container-high text-on-surface-variant px-6 py-4 rounded-md font-bold hover:bg-surface-container-highest transition-all border border-transparent hover:border-outline-variant cursor-pointer;
+}
+
+.init-btn-secondary__text {
+  @apply uppercase tracking-tighter text-sm;
+}
+
+.init-cards {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 w-full max-w-4xl;
+}
+
+.init-card {
+  @apply bg-surface-container-low p-6 rounded-xl border border-outline-variant hover:border-primary/50 transition-colors cursor-pointer;
+}
+
+.init-card__icon-wrap {
+  @apply w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform;
+}
+
+.init-card__icon--1 {
+  @apply text-primary;
+}
+
+.init-card__icon--2 {
+  @apply text-tertiary;
+}
+
+.init-card__icon--3 {
+  @apply text-secondary;
+}
+
+.init-card__title {
+  @apply font-bold text-on-surface mb-2 m-0;
+}
+
+.init-card__desc {
+  @apply text-sm text-on-surface-variant m-0;
+}

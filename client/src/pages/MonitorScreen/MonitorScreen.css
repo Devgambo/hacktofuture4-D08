@@ -1,0 +1,193 @@
+@reference "../../styles/globals.css";
+
+.monitor-page {
+  @apply flex h-screen overflow-hidden bg-background;
+}
+
+.monitor-main {
+  @apply flex-1 lg:ml-64 p-8 overflow-y-auto;
+}
+
+.monitor-header {
+  @apply mb-8;
+}
+
+.monitor-header__content {
+  @apply flex justify-between items-end;
+}
+
+.monitor-header__title-group {
+  @apply flex items-center gap-3 mb-2;
+}
+
+.monitor-header__badge {
+  @apply bg-tertiary-container text-white px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase rounded;
+}
+
+.monitor-header__title {
+  @apply text-3xl font-extrabold tracking-tighter text-on-surface m-0;
+}
+
+.monitor-header__desc {
+  @apply text-on-surface-variant max-w-2xl leading-relaxed m-0;
+}
+
+.monitor-header__score-group {
+  @apply flex flex-col items-end;
+}
+
+.monitor-header__score-label {
+  @apply text-[10px] font-bold text-outline uppercase tracking-tighter mb-1;
+}
+
+.monitor-header__score {
+  @apply flex items-baseline gap-1;
+}
+
+.monitor-header__score-value {
+  @apply text-5xl font-black text-primary italic;
+}
+
+.monitor-header__score-max {
+  @apply text-xl font-bold text-outline;
+}
+
+.monitor-grid {
+  @apply grid grid-cols-12 gap-6;
+}
+
+.monitor-logs {
+  @apply col-span-12 lg:col-span-8 space-y-6 flex-col gap-6;
+}
+
+.log-panel {
+  @apply bg-on-surface text-surface-bright rounded-xl overflow-hidden border border-on-surface-variant/20 shadow-2xl;
+}
+
+.log-panel__header {
+  @apply bg-stone-800 px-4 py-2 flex justify-between items-center border-b border-white/5;
+}
+
+.log-panel__controls {
+  @apply flex items-center gap-4;
+}
+
+.log-panel__dots {
+  @apply flex gap-1.5;
+}
+
+.log-panel__dot1 {
+  @apply w-2.5 h-2.5 rounded-full bg-error;
+}
+
+.log-panel__dot2 {
+  @apply w-2.5 h-2.5 rounded-full bg-secondary-container;
+}
+
+.log-panel__dot3 {
+  @apply w-2.5 h-2.5 rounded-full bg-tertiary;
+}
+
+.log-panel__title {
+  @apply text-[11px] font-bold tracking-widest uppercase opacity-70;
+}
+
+.log-panel__status {
+  @apply flex items-center gap-3;
+}
+
+.log-panel__pulse-group {
+  @apply flex h-2 w-2 relative;
+}
+
+.log-panel__pulse-ping {
+  @apply animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75;
+}
+
+.log-panel__pulse-dot {
+  @apply relative inline-flex rounded-full h-2 w-2 bg-primary;
+}
+
+.log-panel__status-text {
+  @apply text-[10px] font-mono opacity-50;
+}
+
+.log-panel__list {
+  @apply p-6 h-[480px] overflow-y-auto font-mono text-xs leading-relaxed space-y-2;
+}
+
+.monitor-sidebar {
+  @apply col-span-12 lg:col-span-4 space-y-6 flex-col gap-6 flex;
+}
+
+.stats-card {
+  @apply bg-surface-container-low p-6 border border-outline-variant rounded-xl;
+}
+
+.stats-card__title {
+  @apply text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-6 m-0;
+}
+
+.stats-card__content {
+  @apply space-y-6;
+}
+
+.stat-row {
+  @apply relative pt-1;
+}
+
+.stat-row__header {
+  @apply flex items-center justify-between mb-2;
+}
+
+.stat-row__label {
+  @apply text-[11px] font-bold text-on-surface;
+}
+
+.stat-row__value--primary {
+  @apply text-[11px] font-bold text-primary;
+}
+
+.stat-row__value--tertiary {
+  @apply text-[11px] font-bold text-tertiary;
+}
+
+.stat-bar {
+  @apply overflow-hidden h-2 text-xs flex bg-outline-variant rounded-full;
+}
+
+.stat-bar__fill--primary {
+  @apply shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary rounded-full;
+}
+
+.stat-bar__fill--tertiary {
+  @apply shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-tertiary rounded-full;
+}
+
+.leads-card {
+  @apply bg-surface-bright p-6 border border-outline-variant rounded-xl;
+}
+
+.leads-card__title {
+  @apply text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4 m-0;
+}
+
+.leads-card__content {
+  @apply space-y-4;
+}
+
+.lead-item {
+  @apply flex items-center gap-3;
+}
+
+.lead-item__img {
+  @apply w-10 h-10 rounded-md object-cover;
+}
+
+.lead-item__name {
+  @apply text-sm font-bold text-on-surface m-0;
+}
+
+.lead-item__role {
+  @apply text-[10px] text-on-surface-variant font-medium m-0;
+}
