@@ -1,0 +1,228 @@
+@reference "../../styles/globals.css";
+
+.dest-page {
+  @apply relative min-h-screen w-full overflow-hidden bg-background cursor-default pb-24;
+}
+
+.dest-page__bg-grid {
+  @apply absolute inset-0 bg-grid-overlay pointer-events-none z-0;
+}
+
+.dest-page__glow-1 {
+  @apply absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary opacity-20 blur-[150px] rounded-full pointer-events-none;
+}
+
+.dest-page__glow-2 {
+  @apply absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-tertiary-fixed opacity-15 blur-[120px] rounded-full pointer-events-none;
+}
+
+.dest-nav {
+  @apply relative z-10 flex items-center justify-between px-8 py-8 max-w-7xl mx-auto;
+}
+
+.dest-nav__brand {
+  @apply flex items-center gap-5 cursor-pointer hover:opacity-80 transition-opacity;
+}
+
+.dest-nav__logo-container {
+  @apply w-12 h-12 flex items-center justify-center;
+}
+
+.dest-nav__logo {
+  @apply w-full h-full object-contain scale-150 transform-gpu;
+}
+
+.dest-nav__title {
+  @apply font-headline font-extrabold tracking-tighter text-2xl text-on-surface;
+}
+
+.dest-nav__btn {
+  @apply px-4 py-2 border border-outline-variant text-on-surface-variant rounded font-bold tracking-widest text-xs uppercase hover:bg-surface-container-high transition-colors cursor-pointer;
+}
+
+.dest-hero {
+  @apply relative z-10 pt-20 pb-16 px-6 max-w-5xl mx-auto flex w-full justify-center text-center;
+}
+
+.dest-hero__content {
+  @apply flex flex-col items-center;
+}
+
+.dest-hero__badge {
+  @apply inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-container-high border border-outline-variant text-[11px] font-bold tracking-[0.2em] uppercase text-primary mb-8;
+}
+
+.dest-hero__badge-dot {
+  @apply w-2 h-2 rounded-full bg-primary animate-pulse;
+}
+
+.dest-hero__title {
+  @apply font-headline font-black text-5xl md:text-7xl tracking-tighter text-on-surface leading-tight mb-8;
+}
+
+.dest-hero__subtitle {
+  @apply font-body text-lg md:text-xl text-on-surface-variant max-w-2xl leading-relaxed;
+}
+
+.dest-tabs-section {
+  @apply relative z-10 px-6 max-w-6xl mx-auto mt-12;
+}
+
+.dest-tabs-container {
+  @apply flex justify-center mb-16;
+}
+
+.dest-tabs {
+  @apply inline-flex gap-4 p-2 rounded-2xl bg-surface-container-lowest border border-outline-variant/50;
+}
+
+.dest-tab {
+  @apply relative px-8 py-4 rounded-xl transition-all duration-300 font-headline font-bold text-sm tracking-widest flex items-center gap-3;
+  @apply text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high;
+}
+
+.dest-tab--active {
+  @apply bg-primary/10 text-primary shadow-lg shadow-primary/5;
+}
+
+.dest-tab__icon {
+  @apply text-xl;
+}
+
+.dest-tab__indicator {
+  @apply absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-t-full;
+}
+
+.dest-viewer {
+  @apply w-full;
+}
+
+.dest-content {
+  @apply flex flex-col;
+}
+
+.dest-section-header {
+  @apply mb-12 text-center md:text-left;
+}
+
+.dest-section-title {
+  @apply font-headline font-black text-4xl tracking-tighter text-on-surface mb-4;
+}
+
+.dest-section-desc {
+  @apply text-on-surface-variant text-lg max-w-3xl leading-relaxed;
+}
+
+.dest-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
+}
+
+.dest-card {
+  @apply bg-surface-container-lowest border border-outline-variant/50 rounded-2xl p-8 relative overflow-hidden transition-all duration-500 hover:border-primary/40 hover:-translate-y-2;
+}
+
+.dest-card__num {
+  @apply absolute -top-4 -right-2 font-headline font-black text-6xl text-primary/5;
+}
+
+.dest-card__title {
+  @apply font-headline text-xl font-bold tracking-tight text-on-surface mb-3;
+}
+
+.dest-card__text {
+  @apply text-sm text-on-surface-variant leading-relaxed;
+}
+
+.dest-row-grid {
+  @apply flex flex-col gap-6;
+}
+
+.dest-wide-card {
+  @apply bg-surface-container-lowest border border-outline-variant/50 rounded-2xl p-8 flex items-start gap-8 transition-all hover:bg-surface-container-high hover:border-primary/30;
+}
+
+.dest-wide-card__icon {
+  @apply w-16 h-16 rounded-2xl bg-surface-container-high flex items-center justify-center text-primary shrink-0;
+}
+
+.dest-wide-card__icon span {
+  @apply text-3xl;
+}
+
+.dest-wide-card__title {
+  @apply font-headline text-2xl font-black tracking-tight text-on-surface mb-2;
+}
+
+.dest-wide-card__text {
+  @apply text-on-surface-variant leading-relaxed max-w-3xl;
+}
+
+.dest-info-box {
+  @apply p-8 rounded-2xl bg-surface-container-high/50 border border-outline-variant border-dashed;
+}
+
+.dest-info-box__header {
+  @apply flex items-center gap-3 font-headline font-black tracking-widest text-sm mb-4;
+}
+
+.dest-info-box__text {
+  @apply text-on-surface-variant leading-loose;
+}
+
+/* CD Visual */
+.dest-cd-visual {
+  @apply flex flex-col items-center gap-12 py-12 bg-surface-container-lowest border border-outline-variant rounded-3xl mb-8 relative overflow-hidden;
+}
+
+.dest-cloud-grid {
+  @apply flex gap-6 md:gap-12;
+}
+
+.dest-cloud-node {
+  @apply px-8 py-4 bg-background border border-outline-variant rounded-xl font-headline font-black text-xs tracking-[0.2em] text-on-surface-variant;
+  @apply hover:border-primary hover:text-primary transition-colors cursor-default z-10 shadow-xl;
+}
+
+.dest-flow-line {
+  @apply flex flex-col items-center gap-4 relative w-full h-24;
+}
+
+.dest-flow-line::before {
+  content: "";
+  @apply absolute top-0 bottom-0 w-px bg-linear-to-b from-outline-variant to-primary;
+}
+
+.dest-flow-label {
+  @apply absolute top-1/2 -translate-y-1/2 px-4 py-1 bg-surface-container-high border border-outline-variant rounded-full text-[10px] font-black tracking-widest text-primary z-10;
+}
+
+.dest-flow-arrow {
+  @apply absolute bottom-0 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-primary;
+}
+
+.dest-engine-core {
+  @apply relative px-12 py-6 bg-primary text-white font-headline font-black text-xl tracking-[0.5em] rounded shadow-[0_0_50px_rgba(var(--color-primary-rgb),0.3)];
+}
+
+.dest-engine-core__glitch {
+  @apply absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100;
+  animation: glitch 1s infinite alternate;
+}
+
+@keyframes glitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+  100% { transform: translate(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

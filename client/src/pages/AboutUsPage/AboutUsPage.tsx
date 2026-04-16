@@ -27,6 +27,13 @@ export default function AboutUsPage() {
             ARCHITECTURE
           </button>
           <button 
+            className="about-nav__home-btn mr-4" 
+            onClick={() => navigate('/about/destructure')}
+            type="button"
+          >
+            DESTRUCTURE
+          </button>
+          <button 
             className="about-nav__home-btn" 
             onClick={() => navigate('/')}
             type="button"
