@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'sonner';
 import LoadingScreen from './components/LoadingScreen/LoadingScreen';
@@ -7,6 +7,7 @@ import LandingPage from './pages/LandingPage/LandingPage';
 import OAuthScreen from './pages/OAuthScreen/OAuthScreen';
 import InitRepoScreen from './pages/InitRepoScreen/InitRepoScreen';
 import MonitorScreen from './pages/MonitorScreen/MonitorScreen';
+import DashboardLayout from './components/DashboardLayout/DashboardLayout';
 
 /**
  * Handles the post-OAuth redirect.
@@ -32,6 +33,19 @@ const PostAuthRedirectHandler: React.FC = () => {
   return null;
 };
 
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  const location = useLocation();
+
+  if (!isAuthenticated) {
+    // Save the intended route so they can bounce back after OAuth
+    sessionStorage.setItem('postAuthRedirect', location.pathname);
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+};
+
 const AppRoutes: React.FC = () => {
   const { isLoading } = useAuth();
 
@@ -45,9 +59,39 @@ const AppRoutes: React.FC = () => {
       <Toaster position="top-right" richColors />
       <Routes>
         <Route path="/"        element={<LandingPage />} />
-        <Route path="/oauth"   element={<OAuthScreen />} />
-        <Route path="/init"    element={<InitRepoScreen />} />
-        <Route path="/monitor" element={<MonitorScreen />} />
+        
+        {/* Protected Routes */}
+        <Route 
+          path="/oauth"   
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <OAuthScreen />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/init"    
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <InitRepoScreen />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/monitor" 
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <MonitorScreen />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
         {/* Fallback */}
         <Route path="*"        element={<LandingPage />} />
       </Routes>

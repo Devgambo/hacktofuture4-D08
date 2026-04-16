@@ -1,31 +1,51 @@
 @reference "../../styles/globals.css";
 
+:root {
+  --sidebar-width: 16rem;
+  --sidebar-collapsed-width: 4.5rem;
+  --sidebar-transition: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .sidebar {
-  @apply fixed left-0 top-0 h-full flex flex-col z-40 bg-[var(--color-surface-container-lowest)] border-r border-outline-variant w-64 tracking-tight text-sm;
+  @apply fixed left-0 top-0 h-full flex flex-col z-40 bg-[var(--color-surface-container-lowest)] border-r border-outline-variant tracking-tight text-sm;
+  width: var(--sidebar-width);
+  transition: width var(--sidebar-transition);
+}
+
+.sidebar--collapsed {
+  width: var(--sidebar-collapsed-width);
 }
 
 .sidebar__header {
-  @apply p-6;
+  @apply p-4 h-full flex flex-col;
+}
+
+.sidebar__brand-container {
+  @apply flex items-center justify-between mb-8 px-2;
 }
 
 .sidebar__brand {
-  @apply flex items-center gap-2 mb-8 cursor-pointer;
+  @apply flex items-center gap-3 cursor-pointer no-underline overflow-hidden;
 }
 
-.sidebar__logo-container {
-  @apply w-8 h-8 bg-primary flex items-center justify-center rounded text-white transition-transform group-hover:scale-105;
+.sidebar__logo-wrapper {
+  @apply flex-shrink-0 w-8 h-8 flex items-center justify-center rounded overflow-hidden;
 }
 
-.sidebar__logo-icon {
-  font-variation-settings: 'FILL' 1;
+.sidebar__logo-img {
+  @apply w-full h-full object-contain;
 }
 
-.sidebar__title {
-  @apply text-lg font-black tracking-tighter text-primary m-0 leading-tight;
+.sidebar__brand-name {
+  @apply text-lg font-black tracking-tighter text-on-surface m-0 leading-tight whitespace-nowrap;
 }
 
-.sidebar__version {
-  @apply text-[10px] text-on-surface-variant font-medium tracking-widest uppercase m-0 leading-tight;
+.sidebar__collapse-toggle {
+  @apply flex items-center justify-center p-1 rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-primary transition-colors border-none bg-transparent cursor-pointer;
+}
+
+.sidebar--collapsed .sidebar__collapse-toggle {
+  @apply absolute -right-3 top-12 bg-surface-container-lowest border border-outline-variant shadow-sm z-50;
 }
 
 .sidebar__nav {
@@ -33,17 +53,31 @@
 }
 
 .sidebar__nav-link {
-  @apply flex items-center gap-3 px-4 py-2 cursor-pointer transition-colors duration-150 rounded-md text-on-surface hover:text-primary hover:bg-surface-container-low no-underline;
+  @apply flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all duration-150 rounded-md text-on-surface hover:text-primary hover:bg-surface-container-low no-underline whitespace-nowrap overflow-hidden;
+}
+
+.sidebar--collapsed .sidebar__nav-link {
+  @apply justify-center px-0;
 }
 
 .sidebar__nav-link--active {
-  @apply text-primary font-semibold border-r-4 border-primary bg-primary/10;
+  @apply text-primary font-semibold bg-primary/10;
+  box-shadow: inset -4px 0 0 var(--color-primary);
+}
+
+.sidebar--collapsed .sidebar__nav-link--active {
+  box-shadow: none;
+  @apply bg-primary/20;
 }
 
 .sidebar__footer {
-  @apply mt-auto p-6 border-t border-outline-variant/50;
+  @apply mt-auto pt-4 border-t border-outline-variant/50;
 }
 
 .sidebar__logout {
-  @apply flex items-center gap-3 w-full px-4 py-2 text-on-surface hover:text-primary hover:bg-surface-container-low cursor-pointer transition-colors duration-150 rounded-md border-none bg-transparent font-sans tracking-tight;
+  @apply flex items-center gap-3 w-full px-3 py-2.5 text-error hover:text-white hover:bg-error cursor-pointer transition-colors duration-150 rounded-md border-none bg-transparent font-sans tracking-tight whitespace-nowrap overflow-hidden;
+}
+
+.sidebar--collapsed .sidebar__logout {
+  @apply justify-center px-0;
 }
