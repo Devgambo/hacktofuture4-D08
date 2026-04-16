@@ -5,7 +5,7 @@
 }
 
 .monitor-main {
-  @apply flex-1 lg:ml-64 p-8 overflow-y-auto;
+  @apply flex-1 p-8 overflow-y-auto;
 }
 
 .monitor-header {
@@ -61,12 +61,14 @@
 }
 
 .log-panel {
-  @apply bg-on-surface text-surface-bright rounded-xl overflow-hidden border border-on-surface-variant/20 shadow-2xl;
+  @apply bg-surface-container-high text-on-surface rounded-xl overflow-hidden border border-outline-variant shadow-lg;
 }
 
+
 .log-panel__header {
-  @apply bg-stone-800 px-4 py-2 flex justify-between items-center border-b border-white/5;
+  @apply bg-surface-container-highest px-4 py-2 flex justify-between items-center border-b border-outline-variant;
 }
+
 
 .log-panel__controls {
   @apply flex items-center gap-4;
@@ -191,3 +193,50 @@
 .lead-item__role {
   @apply text-[10px] text-on-surface-variant font-medium m-0;
 }
+
+/* ── New live-data classes ───────────────────────────────────────────── */
+
+.monitor-stats-bar {
+  @apply flex flex-wrap gap-3 mb-6;
+}
+
+.monitor-stat-chip {
+  @apply flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-low border border-outline-variant text-xs font-semibold text-on-surface-variant;
+}
+
+.monitor-stat-chip__dot {
+  @apply w-2 h-2 rounded-full bg-outline;
+}
+
+.monitor-stat-chip--running .monitor-stat-chip__dot {
+  @apply bg-yellow-500 animate-pulse;
+}
+
+.monitor-stat-chip--ok .monitor-stat-chip__dot {
+  @apply bg-green-500;
+}
+
+.monitor-stat-chip--fail .monitor-stat-chip__dot {
+  @apply bg-red-500;
+}
+
+.monitor-repo-item {
+  @apply flex items-center gap-3 py-2 border-b border-outline-variant/30 last:border-none;
+}
+
+.monitor-repo-item__info {
+  @apply flex-1 min-w-0;
+}
+
+.monitor-repo-item__name {
+  @apply text-sm font-mono font-semibold text-on-surface truncate m-0;
+}
+
+.monitor-repo-item__meta {
+  @apply text-[10px] text-on-surface-variant m-0;
+}
+
+.monitor-repo-item__remove {
+  @apply flex items-center justify-center w-6 h-6 text-on-surface-variant hover:text-error hover:bg-error/10 rounded transition-colors border-none bg-transparent cursor-pointer flex-shrink-0;
+}
+

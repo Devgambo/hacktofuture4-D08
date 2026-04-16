@@ -19,6 +19,11 @@ export interface User {
   avatar_url: string;
 }
 
+export interface AuthContextData {
+  user: User;
+  repos: any[];
+}
+
 export interface Job {
   id: string;
   repo_full_name: string;
@@ -87,10 +92,10 @@ export interface SSEEvent {
 
 // ── Auth ───────────────────────────────────────────────────────────────────
 
-export async function fetchCurrentUser(): Promise<User> {
+export async function fetchCurrentUser(): Promise<AuthContextData> {
   const res = await fetch(`${API_BASE}/api/auth/me`, fetchOpts);
   if (!res.ok) throw new Error('Not authenticated');
-  return res.json() as Promise<User>;
+  return res.json() as Promise<AuthContextData>;
 }
 
 export async function logout(): Promise<void> {
