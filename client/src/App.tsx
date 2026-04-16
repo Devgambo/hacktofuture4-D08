@@ -8,6 +8,7 @@ import OAuthScreen from './pages/OAuthScreen/OAuthScreen';
 import InitRepoScreen from './pages/InitRepoScreen/InitRepoScreen';
 import MonitorScreen from './pages/MonitorScreen/MonitorScreen';
 import AboutUsPage from './pages/AboutUsPage/AboutUsPage';
+import ArchitecturePage from './pages/ArchitecturePage/ArchitecturePage';
 import DashboardLayout from './components/DashboardLayout/DashboardLayout';
 
 /**
@@ -60,6 +61,7 @@ const AppRoutes: React.FC = () => {
       <Routes>
         <Route path="/"        element={<LandingPage />} />
         <Route path="/about"   element={<AboutUsPage />} />
+        <Route path="/about/architecture" element={<ArchitecturePage />} />
         
         {/* Protected Routes */}
         <Route 

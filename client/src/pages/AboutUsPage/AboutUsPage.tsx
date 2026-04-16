@@ -20,6 +20,13 @@ export default function AboutUsPage() {
         </div>
         <div className="about-nav__links">
           <button 
+            className="about-nav__home-btn mr-4" 
+            onClick={() => navigate('/about/architecture')}
+            type="button"
+          >
+            ARCHITECTURE
+          </button>
+          <button 
             className="about-nav__home-btn" 
             onClick={() => navigate('/')}
             type="button"
@@ -76,7 +83,7 @@ export default function AboutUsPage() {
         </div>
       </section>
 
-      <section className="feature-section mt-32">
+      <section className="feature-section mt-64">
         <div className="feature-section__grid">
           <div className="featured-card group">
             <img 
