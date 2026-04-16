@@ -1104,3 +1104,53 @@ async def get_memory_stats_endpoint(request: Request):
     from memory.store import get_memory_stats
     stats = await get_memory_stats()
     return stats
+
+
+# ─────────────────────────────────────────────────────────
+# AWS CD Pipeline Error Analysis API
+# ─────────────────────────────────────────────────────────
+
+@app.post("/api/aws/analyze")
+async def aws_analyze_endpoint(request: Request):
+    """Analyze CI/CD log text for AWS error categories (quota/IAM/network).
+
+    Request body:
+      { "error_logs": "<raw CI log text>", "region": "us-east-1" }  (region optional)
+
+    Response:
+      {
+        "detected": bool,
+        "category": "quota" | "iam" | "network" | "",
+        "sub_category": str,
+        "fix_strategy": str,
+        "p99_metric": { "p99": float, "sample_count": int, "unit": str }
+      }
+
+    Metric percentile: P99
+      CD failures are rare, high-impact events.  P99 catches the worst-case
+      1% tail — quota exhaustion, IAM denials, and network failures that would
+      go undetected at P95.
+    """
+    from auth import get_session
+    session = await get_session(request)
+    if not session:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    body = await request.json()
+    error_logs = body.get("error_logs", "")
+    region     = body.get("region")
+
+    if not error_logs:
+        raise HTTPException(status_code=422, detail="error_logs is required")
+
+    from aws.cd_analyzer import analyze
+    result = await analyze(error_logs, region=region)
+
+    return {
+        "detected":      result.detected,
+        "category":      result.category,
+        "sub_category":  result.sub_category,
+        "fix_strategy":  result.fix_strategy,
+        "p99_metric":    result.p99_metric,
+        "raw_detection": result.raw_detection,
+    }

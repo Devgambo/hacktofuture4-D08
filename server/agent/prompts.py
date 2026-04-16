@@ -45,7 +45,7 @@ You are an expert software engineer. A CI pipeline has failed and you must produ
 ## File Contents Under Investigation
 {files_content}
 
-{memory_context}
+{aws_fix_context}{memory_context}
 
 ## Task
 1. Identify the exact root cause. Reference specific file paths, line numbers, and symbol names.
@@ -318,6 +318,21 @@ Produce exactly this JSON (no other text):
   "fix_summary": "Concise description of WHAT was changed and WHY it fixed the issue. Be specific enough that an AI reading this can reproduce the fix approach.",
   "language": "primary programming language of the fix (python, javascript, typescript, etc.)"
 }}
+"""
+
+AWS_CD_FIX_CONTEXT = """\
+## AWS CD Pipeline Error Analysis
+This CI failure was classified as an AWS **{category}** error (sub-type: {sub_category}).
+{p99_info}
+
+### Fix Strategy
+{fix_strategy}
+
+When generating the code patch, apply this fix strategy to the IaC files:
+- quota errors  → Terraform/CDK/CloudFormation: request quota increase or reduce resource count.
+- iam errors    → Add the missing IAM policy statement to the deployment role resource.
+- network errors → Update security group rules, route tables, or VPC endpoint resources.
+Only modify files directly responsible for the failure. Do not add unrelated changes.
 """
 
 MEMORY_CONTEXT_SECTION = """\

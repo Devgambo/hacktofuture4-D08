@@ -23,7 +23,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from langgraph.graph import StateGraph, END
 from typing_extensions import TypedDict
 
-from agent.prompts import SYSTEM_PROMPT, FIX_GENERATION_PROMPT, MEMORY_CONTEXT_SECTION
+from agent.prompts import SYSTEM_PROMPT, FIX_GENERATION_PROMPT, MEMORY_CONTEXT_SECTION, AWS_CD_FIX_CONTEXT
 from config import get_settings
 from rsi import db as rsi_db
 
@@ -277,6 +277,8 @@ class AgentState(TypedDict):
     context_iteration: int            # how many extra context rounds have run (max 3)
     need_more_context: bool           # set by request_context node
     requested_files: list[str]        # files LLM asked for in current iteration
+    aws_cd_analysis: dict             # CDAnalysisResult fields (empty if not an AWS error)
+    aws_fix_context: str              # formatted AWS error context for generate_fix
 
 
 # ─────────────────────────────────────────────────────────
@@ -325,6 +327,63 @@ async def parse_event(state: AgentState) -> dict:
         "status":      "parsed",
         "retry_count": 0,
     }
+
+
+async def aws_cd_triage(state: AgentState) -> dict:
+    """Detect AWS CD error category (quota/IAM/network) and fetch P99 metrics.
+
+    Runs after parse_event so CI logs are available.  If the logs contain an
+    AWS error pattern the result is formatted and injected into aws_fix_context,
+    which is later included in the generate_fix prompt.
+
+    Non-fatal: any exception falls through — standard CI fix flow continues.
+    """
+    from aws.cd_analyzer import analyze
+
+    error_logs = state.get("error_logs", "")
+    if not error_logs:
+        return {"aws_cd_analysis": {}, "aws_fix_context": "", "status": "aws_triage_skipped"}
+
+    try:
+        result = await analyze(error_logs)
+        if not result.detected:
+            logger.info("[aws_cd_triage] No AWS CD error pattern found")
+            return {"aws_cd_analysis": {}, "aws_fix_context": "", "status": "aws_triage_no_match"}
+
+        p99_info = ""
+        if result.p99_metric and result.p99_metric.get("p99", 0) > 0:
+            p99_info = (
+                f"\nP99 metric ({result.p99_metric.get('unit', 'count')}): "
+                f"{result.p99_metric['p99']:.2f} "
+                f"over {result.p99_metric.get('sample_count', 0)} samples."
+            )
+
+        aws_fix_context = AWS_CD_FIX_CONTEXT.format(
+            category=result.category,
+            sub_category=result.sub_category or "N/A",
+            fix_strategy=result.fix_strategy,
+            p99_info=p99_info,
+        )
+
+        logger.info(
+            "[aws_cd_triage] AWS CD error detected: category=%s sub=%s",
+            result.category, result.sub_category or "-",
+        )
+        return {
+            "aws_cd_analysis": {
+                "detected":     result.detected,
+                "category":     result.category,
+                "sub_category": result.sub_category,
+                "fix_strategy": result.fix_strategy,
+                "p99_metric":   result.p99_metric,
+            },
+            "aws_fix_context": aws_fix_context,
+            "status": "aws_triage_complete",
+        }
+
+    except Exception as exc:
+        logger.warning("[aws_cd_triage] Analysis failed (non-fatal): %s", exc)
+        return {"aws_cd_analysis": {}, "aws_fix_context": "", "status": "aws_triage_error"}
 
 
 async def rsi_context_build(state: AgentState) -> dict:
@@ -743,18 +802,20 @@ async def generate_fix(state: AgentState) -> dict:
 
     rsi_context    = state.get("rsi_context", "No RSI context available.")
     memory_context = state.get("memory_context", "")
+    aws_fix_context = state.get("aws_fix_context", "")
 
     repo_summary     = await rsi_db.get_repo_summary(state["repo_name"])
     repo_summary_str = repo_summary["description"] if repo_summary else "No repo summary available."
 
     logger.info(
         "[generate_fix] Context sizes — repo_summary=%d  rsi_context=%d  "
-        "error_logs=%d  pr_diff=%d  files=%d  memory=%d chars",
+        "error_logs=%d  pr_diff=%d  files=%d  memory=%d  aws=%d chars",
         len(repo_summary_str), len(rsi_context),
         len(state.get("error_logs", "")),
         len(state.get("pr_diff", "")),
         len(files_str),
         len(memory_context),
+        len(aws_fix_context),
     )
     logger.info("[generate_fix] Sending to %s...", get_settings().coding_model_id)
 
@@ -767,6 +828,7 @@ async def generate_fix(state: AgentState) -> dict:
             pr_diff=state.get("pr_diff", ""),
             files_content=files_str,
             memory_context=memory_context,
+            aws_fix_context=aws_fix_context,
         )),
     ])
 
@@ -1119,6 +1181,7 @@ def build_graph() -> StateGraph:
     graph = StateGraph(AgentState)
 
     graph.add_node("parse_event",           parse_event)
+    graph.add_node("aws_cd_triage",         aws_cd_triage)
     graph.add_node("rsi_context_build",     rsi_context_build)
     graph.add_node("safety_precheck",       safety_precheck)
     graph.add_node("memory_recall",         memory_recall)
@@ -1132,7 +1195,8 @@ def build_graph() -> StateGraph:
 
     graph.set_entry_point("parse_event")
 
-    graph.add_edge("parse_event",           "rsi_context_build")
+    graph.add_edge("parse_event",           "aws_cd_triage")
+    graph.add_edge("aws_cd_triage",         "rsi_context_build")
     graph.add_edge("rsi_context_build",     "safety_precheck")
     graph.add_edge("safety_precheck",       "memory_recall")
     graph.add_edge("memory_recall",         "fetch_files")
@@ -1183,6 +1247,8 @@ async def run_agent(
         "context_iteration":    0,
         "need_more_context":    False,
         "requested_files":      [],
+        "aws_cd_analysis":      {},
+        "aws_fix_context":      "",
     }
 
     if emit_event:
@@ -1210,6 +1276,7 @@ async def run_agent(
 def _step_description(node: str) -> str:
     return {
         "parse_event":           "Fetching CI job logs from GitHub Actions",
+        "aws_cd_triage":         "AWS CD error triage: quota / IAM / network + P99 metrics",
         "rsi_context_build":     "RSI: role, symbols, direct importers/imports for changed files",
         "safety_precheck":       "Sensitivity check — gating secrets/infra files",
         "memory_recall":         "Searching agent memory for similar past fixes",

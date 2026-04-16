@@ -46,6 +46,17 @@ class Settings(BaseSettings):
     pr_review_auto_merge_threshold: int = 75
     pr_review_manual_threshold: int = 50
 
+    # ── AWS CD Pipeline Error Detection ─────────────────────
+    # Region for CloudWatch/Service Quotas API calls.
+    # Leave blank when running on EC2/ECS — credentials come from the instance role.
+    aws_region: str = "us-east-1"
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
+    aws_session_token: str = ""           # only for temporary STS credentials
+    # CloudWatch Logs group where CloudTrail delivers events.
+    # Required for P99 IAM error metrics. Example: "aws-cloudtrail-logs-123456789012"
+    aws_cloudtrail_log_group: str = ""
+
     # ── Telegram Bot ────────────────────────────────────
     telegram_bot_token: str = ""
     telegram_webhook_secret: str = ""
