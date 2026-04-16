@@ -127,7 +127,7 @@
 }
 
 .arch-viewer__image-wrapper {
-  @apply relative cursor-pointer group w-full flex justify-center;
+  @apply relative cursor-pointer w-full flex justify-center;
 }
 
 .arch-viewer__image {

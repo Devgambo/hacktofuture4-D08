@@ -105,7 +105,7 @@ export default function ArchitecturePage() {
             <div className="arch-viewer__content">
               {activeImageData && (
                 <div 
-                  className="arch-viewer__image-wrapper"
+                  className="arch-viewer__image-wrapper group"
                   onClick={handleOpenImage}
                 >
                   <img 
