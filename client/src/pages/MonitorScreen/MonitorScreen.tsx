@@ -17,6 +17,7 @@ const EVENT_META: Record<string, { label: string; category: string; icon: string
   agent_step:               { label: 'Agent Step',     category: 'agent', icon: 'smart_toy' },
   job_completed:            { label: 'Job Done',       category: 'ci',    icon: 'check_circle' },
   job_failed:               { label: 'Job Failed',     category: 'ci',    icon: 'report' },
+  pr_review_result:         { label: 'PR Review',      category: 'agent', icon: 'rate_review' },
   rsi_update_started:       { label: 'RSI Update',     category: 'rsi',   icon: 'database' },
   rsi_update_completed:     { label: 'RSI Synced',     category: 'rsi',   icon: 'database' },
   rsi_update_failed:        { label: 'RSI Failed',     category: 'rsi',   icon: 'report' },
@@ -172,8 +173,11 @@ export default function MonitorScreen() {
                     ) : (
                       filteredEvents.map((ev, i) => {
                         const meta = EVENT_META[ev.type] || { label: ev.type, category: 'ci', icon: 'webhook' };
+                        const evData = (ev.data ?? ev) as any;
+                        const isReview = ev.type === 'pr_review_result';
+
                         return (
-                          <div key={i} className="flex gap-4 p-2 hover:bg-surface-container-high/50 rounded-lg transition-colors group">
+                          <div key={i} className={`flex gap-4 p-2 rounded-lg transition-colors group ${isReview ? 'bg-surface-container-low border border-outline-variant/40 p-4 my-1' : 'hover:bg-surface-container-high/50'}`}>
                             <span className="w-20 shrink-0 opacity-70 font-mono text-[11px] mt-0.5">
                               [{ev.timestamp ? formatTime(ev.timestamp) : '??:??:??'}]
                             </span>
@@ -182,18 +186,59 @@ export default function MonitorScreen() {
                                 <span className="material-symbols-outlined text-sm text-primary opacity-80">
                                   {meta.icon}
                                 </span>
-                                <span className="text-primary-fixed font-black uppercase text-[11px] tracking-tight whitespace-nowrap">
+                                <span className="text-primary font-black uppercase text-[11px] tracking-tight whitespace-nowrap">
                                   {meta.label}
                                 </span>
-                                {ev.repo_full_name && (
+                                {(ev.repo_full_name || evData.repo) && (
                                   <span className="px-1.5 py-0.5 rounded bg-surface-container-highest text-[10px] font-mono text-on-surface-variant">
-                                    {ev.repo_full_name}
+                                    {ev.repo_full_name || evData.repo}
+                                  </span>
+                                )}
+                                {isReview && evData.score != null && (
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black tracking-wide ${
+                                    evData.score >= 70 ? 'bg-tertiary/15 text-tertiary' : evData.score >= 40 ? 'bg-secondary-container text-on-secondary-container' : 'bg-error-container text-on-error-container'
+                                  }`}>
+                                    {evData.score}/100 · {evData.score_label}
+                                  </span>
+                                )}
+                                {isReview && evData.merge_recommendation && (
+                                  <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider opacity-70">
+                                    {evData.merge_recommendation === 'approve' ? '✅ Approve' : evData.merge_recommendation === 'block' ? '🚫 Block' : '⚠️ Changes Requested'}
                                   </span>
                                 )}
                               </div>
+
+                              {/* Summary text */}
                               <span className="text-[12px] font-medium text-on-surface leading-tight">
-                                {ev.message || (ev.data as any)?.detail || JSON.stringify(ev.data || {})}
+                                {isReview && evData.summary
+                                  ? evData.summary
+                                  : ev.message || evData.detail || JSON.stringify(ev.data || {})}
                               </span>
+
+                              {/* Top findings for review events */}
+                              {isReview && Array.isArray(evData.top_findings) && evData.top_findings.length > 0 && (
+                                <div className="mt-1 flex flex-col gap-0.5">
+                                  {(evData.top_findings as Array<{severity: string; file: string; title: string}>).map((f, fi) => (
+                                    <span key={fi} className="text-[11px] text-on-surface-variant leading-snug">
+                                      {f.severity === 'critical' ? '🔴' : f.severity === 'warning' ? '🟠' : '🔵'}{' '}
+                                      <span className="font-mono text-[10px]">{f.file}</span>{' '}
+                                      — {f.title}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Review URL link */}
+                              {isReview && evData.review_url && (
+                                <a
+                                  href={evData.review_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[10px] text-primary underline mt-1 hover:opacity-80"
+                                >
+                                  View full review on GitHub →
+                                </a>
+                              )}
                             </div>
                           </div>
                         );

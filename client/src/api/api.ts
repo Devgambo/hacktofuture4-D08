@@ -77,7 +77,8 @@ export type SSEEventType =
   | 'rsi_removed'
   | 'memory_store_started'
   | 'memory_stored'
-  | 'memory_store_failed';
+  | 'memory_store_failed'
+  | 'pr_review_result';
 
 export interface SSEEvent {
   type: SSEEventType;
@@ -230,6 +231,7 @@ export function connectEventStream(onEvent: (event: SSEEvent) => void): EventSou
     'cold_start_started', 'cold_start_completed', 'cold_start_failed',
     'webhook_created', 'rsi_removed',
     'memory_store_started', 'memory_stored', 'memory_store_failed',
+    'pr_review_result',
   ];
 
   eventTypes.forEach((type) => {

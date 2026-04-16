@@ -17,7 +17,7 @@ const TABS = [
     title: 'Continuous Intelligence',
     icon: 'neurology'
   },
-  { 
+  {
     id: 'cd', 
     label: 'CD (DEPLOYMENT)', 
     title: 'Loosely Coupled CD',

@@ -429,17 +429,43 @@ async def _handle_pull_request(payload: dict) -> None:
         jobs[job_id]["status"] = "review_posted"
         jobs[job_id]["result"] = review_result
 
-        _emit_event("job_completed", {
-            "job_id":     job_id,
-            "review_url": review_result.get("comment_url", ""),
-        })
-
         _rv          = review_result.get("review_result", {})
         score        = int(_rv.get("score", 0))
         label        = _rv.get("score_label", "")
         merge_rec    = _rv.get("merge_recommendation", "block")
         findings     = _rv.get("findings", _rv.get("file_reviews", []))
         comment_url  = review_result.get("comment_url", "")
+        pr_summary   = _rv.get("summary", "")
+
+        _emit_event("job_completed", {
+            "job_id":      job_id,
+            "review_url":  comment_url,
+            "detail":      f"Review complete — Score: {score}/100 ({label})",
+            "score":       score,
+            "score_label": label,
+        })
+
+        # Emit a dedicated summary event so the live monitor can show the full review
+        top_findings = []
+        for f in findings[:5]:
+            top_findings.append({
+                "severity": f.get("severity", "info"),
+                "file":     f.get("file", f.get("file_path", "?")),
+                "title":    f.get("title", f.get("comment", "")),
+            })
+
+        _emit_event("pr_review_result", {
+            "job_id":               job_id,
+            "repo":                 repo,
+            "pr_number":            pr_number,
+            "score":                score,
+            "score_label":          label,
+            "merge_recommendation": merge_rec,
+            "summary":              pr_summary,
+            "top_findings":         top_findings,
+            "review_url":           comment_url,
+            "detail":               pr_summary[:200] if pr_summary else f"Score: {score}/100 ({label})",
+        })
         settings     = get_settings()
 
         logger.info("[pr_review] %s#%d — score=%d  label=%s  recommendation=%s",
@@ -694,24 +720,6 @@ async def github_webhook(request: Request, background_tasks: BackgroundTasks):
             logger.info("Skipping PR webhook for agent branch: %s", head_ref)
             return {"status": "ignored", "event": event_type, "reason": "agent branch"}
 
-    elif event_type == "deployment_status":
-        state = payload.get("deployment_status", {}).get("state", "")
-        if state in ("failure", "error"):
-            # Convert to our standard format and process
-            cd_payload = {
-                "repo": payload.get("repository", {}).get("full_name"),
-                "service": payload.get("deployment", {}).get("task", "deploy"),
-                "environment": payload.get("deployment", {}).get("environment", "unknown"),
-                "status": "failed",
-                "provider": "custom",
-                "error_message": payload.get("deployment_status", {}).get("description", "Deployment failed"),
-                "commit_sha": payload.get("deployment", {}).get("sha", ""),
-                "triggered_by": "github-actions"
-            }
-            job_id = str(uuid.uuid4())
-            background_tasks.add_task(_handle_cd_failure, cd_payload, job_id)
-            return {"status": "accepted", "action": "cd_diagnosis", "job_id": job_id}
-
         default_branch = payload.get("repository", {}).get("default_branch", "main")
         if base_ref == default_branch:
             pr_number = pr.get("number", 0)
@@ -743,6 +751,24 @@ async def github_webhook(request: Request, background_tasks: BackgroundTasks):
             background_tasks.add_task(_handle_pull_request, payload)
             _emit_event("webhook_received", {"event": "pull_request", "repo": payload.get("repository", {}).get("full_name")})
             return {"status": "accepted", "action": "pr_review"}
+
+    elif event_type == "deployment_status":
+        state = payload.get("deployment_status", {}).get("state", "")
+        if state in ("failure", "error"):
+            # Convert to our standard format and process
+            cd_payload = {
+                "repo": payload.get("repository", {}).get("full_name"),
+                "service": payload.get("deployment", {}).get("task", "deploy"),
+                "environment": payload.get("deployment", {}).get("environment", "unknown"),
+                "status": "failed",
+                "provider": "custom",
+                "error_message": payload.get("deployment_status", {}).get("description", "Deployment failed"),
+                "commit_sha": payload.get("deployment", {}).get("sha", ""),
+                "triggered_by": "github-actions"
+            }
+            job_id = str(uuid.uuid4())
+            background_tasks.add_task(_handle_cd_failure, cd_payload, job_id)
+            return {"status": "accepted", "action": "cd_diagnosis", "job_id": job_id}
 
     elif event_type in ("installation", "installation_repositories"):
         action = payload.get("action", "")
