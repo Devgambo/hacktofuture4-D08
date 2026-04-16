@@ -51,20 +51,6 @@ export default function InitRepoScreen() {
         <Topbar title="Repository Initialization" breadcrumb="Dashboard" />
 
         <div className="init-content init-content--centered">
-          <div className="init-hero">
-            <div className="init-icon-container">
-              <div className="init-icon-ring" />
-              <div className="init-icon-solid" />
-              <div className="init-icon-inner">
-                <span className="material-symbols-outlined init-icon">folder_zip</span>
-              </div>
-            </div>
-            <div className="init-status">
-              <span className="init-status__badge">System Ready</span>
-              <p className="init-status__text">Select a repository to begin autonomous monitoring.</p>
-            </div>
-          </div>
-
           <div className="init-search-block">
             <h2 className="init-search-block__title">
               Connect a <span className="init-title__highlight">Repository</span>
@@ -142,16 +128,31 @@ export default function InitRepoScreen() {
             >
               <span className="init-btn-primary__content">
                 <span className={`material-symbols-outlined init-btn-primary__icon ${isInitializing ? 'animate-spin' : ''}`}>
-                  {isInitializing ? 'autorenew' : 'rocket_launch'}
+                  {isInitializing ? 'progress_activity' : 'rocket_launch'}
                 </span>
-                {isInitializing ? 'INITIALIZING...' : 'INITIALIZE REPOSITORY'}
+                {isInitializing ? 'PROCESSING ENGINE...' : 'INITIALIZE REPOSITORY'}
               </span>
               {!isInitializing && (
                 <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">chevron_right</span>
               )}
             </button>
           </div>
+
+          <div className="init-hero">
+            <div className="init-icon-container">
+              <div className="init-icon-ring" />
+              <div className="init-icon-solid" />
+              <div className="init-icon-inner">
+                <span className="material-symbols-outlined init-icon">folder_managed</span>
+              </div>
+            </div>
+            <div className="init-status">
+              <span className="init-status__badge">System Standing By</span>
+              <p className="init-status__text">Choose a repository above to initiate architectural indexing.</p>
+            </div>
+          </div>
         </div>
+
       </main>
     </div>
   );

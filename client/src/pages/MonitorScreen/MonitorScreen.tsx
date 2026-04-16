@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import {
   fetchMonitoredRepos,
@@ -12,6 +12,29 @@ import {
   type MemoryStats,
 } from '../../api/api';
 import './MonitorScreen.css';
+
+// ── Event Logic (Functionality from client2) ────────────────────────────────
+
+const EVENT_META: Record<string, { label: string; category: string; icon: string }> = {
+  webhook_received:         { label: 'Webhook',        category: 'ci',    icon: 'webhook' },
+  job_started:              { label: 'Job Started',    category: 'ci',    icon: 'dynamic_feed' },
+  agent_step:               { label: 'Agent Step',     category: 'agent', icon: 'smart_toy' },
+  job_completed:            { label: 'Job Done',       category: 'ci',    icon: 'check_circle' },
+  job_failed:               { label: 'Job Failed',     category: 'ci',    icon: 'report' },
+  rsi_update_started:       { label: 'RSI Update',     category: 'rsi',   icon: 'database' },
+  rsi_update_completed:     { label: 'RSI Synced',     category: 'rsi',   icon: 'database' },
+  rsi_update_failed:        { label: 'RSI Failed',     category: 'rsi',   icon: 'report' },
+  cold_start_started:       { label: 'Ingesting Repo', category: 'rsi',   icon: 'database' },
+  cold_start_completed:     { label: 'Repo Ready',     category: 'rsi',   icon: 'database' },
+  cold_start_failed:        { label: 'Ingest Failed',  category: 'rsi',   icon: 'report' },
+};
+
+const CATEGORIES = [
+  { id: 'all',   label: 'ALL_TRAFFIC' },
+  { id: 'agent', label: 'NEURAL_PROCESS' },
+  { id: 'ci',    label: 'CI_PIPELINE' },
+  { id: 'rsi',   label: 'ARCH_INDEX' },
+];
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString('en-US', { hour12: false });
@@ -35,6 +58,7 @@ export default function MonitorScreen() {
   const [isLoadingJobs, setIsLoadingJobs] = useState(true);
   const [memoryStats, setMemoryStats] = useState<MemoryStats | null>(null);
   const [removingRepo, setRemovingRepo] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState('all');
   const logEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch data on mount
@@ -44,20 +68,17 @@ export default function MonitorScreen() {
       .catch(console.error)
       .finally(() => setIsLoadingRepos(false));
 
-
     fetchJobs()
       .then((data) => setJobs(Array.isArray(data) ? data : []))
       .catch(console.error)
       .finally(() => setIsLoadingJobs(false));
 
-
     fetchMemoryStats()
       .then(setMemoryStats)
       .catch(console.error);
 
-    // Connect to SSE stream
     const es = connectEventStream((event) => {
-      setEvents((prev) => [...prev.slice(-100), event]); // cap at 100
+      setEvents((prev) => [...prev.slice(-100), event]);
     });
 
     return () => es.close();
@@ -67,6 +88,11 @@ export default function MonitorScreen() {
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [events]);
+
+  const filteredEvents = useMemo(() => {
+    if (activeFilter === 'all') return events;
+    return events.filter(ev => (EVENT_META[ev.type]?.category ?? 'ci') === activeFilter);
+  }, [events, activeFilter]);
 
   const handleRemoveRepo = async (fullName: string) => {
     setRemovingRepo(fullName);
@@ -85,7 +111,6 @@ export default function MonitorScreen() {
   const runningJobs = safeJobs.filter((j) => j.status === 'running').length;
   const failedJobs = safeJobs.filter((j) => j.status === 'failed').length;
   const completedJobs = safeJobs.filter((j) => j.status === 'completed').length;
-
 
   return (
     <div className="monitor-page">
@@ -140,17 +165,19 @@ export default function MonitorScreen() {
               [SYSTEM] Syncing monitoring state... Establishing agent uplink...
             </div>
           ) : monitoredRepos.length === 0 ? (
-            <div className="col-span-full py-20 text-center flex flex-col items-center border-2 border-dashed border-outline-variant/30 rounded-3xl bg-surface-container-low/50">
+            <div className="col-span-full py-20 text-center flex flex-col items-center border-2 border-dashed border-outline-variant/30 rounded-3xl bg-surface-container-low/50 max-w-2xl mx-auto w-full">
                <div className="w-16 h-16 mb-4 rounded-full bg-surface-container-high flex items-center justify-center">
-                 <span className="material-symbols-outlined text-3xl text-on-surface-variant/40">bar_chart_off</span>
+                 <span className="material-symbols-outlined text-3xl text-on-surface-variant/40">signal_cellular_nodata</span>
                </div>
                <h3 className="text-xl font-bold text-on-surface uppercase tracking-tight">No metrics in the monitor dashboard</h3>
                <p className="mt-2 text-on-surface-variant text-sm max-w-sm">Initialize a GitHub repository to see live metrics and pipeline health here.</p>
-               <a href="/init" className="mt-6 px-6 py-2 bg-primary text-white text-xs font-black rounded-lg uppercase tracking-widest no-underline hover:bg-primary/90 transition-colors">Start Integration</a>
+               <a href="/init" className="mt-8 px-12 py-4 bg-primary text-white text-xs font-black rounded-xl uppercase tracking-widest no-underline hover:bg-primary-container transition-all shadow-lg shadow-primary/25 inline-flex items-center justify-center min-w-[240px]">
+                 Start Integration
+               </a>
             </div>
           ) : (
             <>
-              {/* Live Event Log */}
+              {/* Event Log with Filtering functionality like client2 */}
               <div className="monitor-logs">
                 <section className="log-panel">
                   <div className="log-panel__header">
@@ -168,25 +195,63 @@ export default function MonitorScreen() {
                         <span className="log-panel__pulse-dot" />
                       </span>
                       <span className="log-panel__status-text">
-                        {events.length > 0 ? `${events.length} events captured` : 'Awaiting events...'}
+                        {events.length} ACTIVE_EVENTS
                       </span>
                     </div>
                   </div>
+
+                  {/* Filter Tabs - Functionality like client2 */}
+                  <div className="flex bg-surface-container-highest/30 border-b border-outline-variant px-2">
+                    {CATEGORIES.map(cat => (
+                      <button
+                        key={cat.id}
+                        onClick={() => setActiveFilter(cat.id)}
+                        className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 ${
+                          activeFilter === cat.id 
+                            ? 'border-primary text-primary bg-primary/5' 
+                            : 'border-transparent text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+                        }`}
+                      >
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+
                   <div className="log-panel__list">
-                    {events.length === 0 ? (
-                      <div className="opacity-50 italic font-mono text-xs">
-                        [SYSTEM] Waiting for agent events... Ensure your webhook is configured correctly.
+                    {filteredEvents.length === 0 ? (
+                      <div className="opacity-50 italic font-mono text-xs flex flex-col items-center justify-center h-full py-10">
+                        <span className="material-symbols-outlined mb-2 text-2xl">search_off</span>
+                        [SYSTEM] No {activeFilter !== 'all' ? activeFilter.toUpperCase() : ''} events captured.
                       </div>
                     ) : (
-                      events.map((ev, i) => (
-                        <div key={i} className="flex gap-4">
-                          <span className="w-24 shrink-0 opacity-50">
-                            [{ev.timestamp ? formatTime(ev.timestamp) : '??:??:??'}]
-                          </span>
-                          <span className="text-primary-fixed font-bold uppercase">{ev.type}:</span>
-                          <span>{ev.repo_full_name ?? ev.message ?? JSON.stringify(ev)}</span>
-                        </div>
-                      ))
+                      filteredEvents.map((ev, i) => {
+                        const meta = EVENT_META[ev.type] || { label: ev.type, category: 'ci', icon: 'webhook' };
+                        return (
+                          <div key={i} className="flex gap-4 p-2 hover:bg-surface-container-high/50 rounded-lg transition-colors group">
+                            <span className="w-20 shrink-0 opacity-40 font-mono text-[10px] mt-0.5">
+                              [{ev.timestamp ? formatTime(ev.timestamp) : '??:??:??'}]
+                            </span>
+                            <div className="flex flex-col gap-1 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="material-symbols-outlined text-sm text-primary opacity-70">
+                                  {meta.icon}
+                                </span>
+                                <span className="text-primary-fixed font-black uppercase text-[10px] tracking-tight whitespace-nowrap">
+                                  {meta.label}
+                                </span>
+                                {ev.repo_full_name && (
+                                  <span className="px-1.5 py-0.5 rounded bg-surface-container-highest text-[9px] font-mono text-on-surface-variant">
+                                    {ev.repo_full_name}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[11px] text-on-surface leading-tight">
+                                {ev.message || (ev.data as any)?.detail || JSON.stringify(ev.data || {})}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })
                     )}
                     <div ref={logEndRef} />
                   </div>

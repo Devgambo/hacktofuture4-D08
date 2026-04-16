@@ -112,7 +112,8 @@
 /* ── CTA button ─────────────────────────────────── */
 
 .init-btn-primary {
-  @apply w-full flex items-center justify-between bg-primary text-white px-6 py-4 rounded-xl font-bold hover:bg-primary-container transition-all active:scale-[0.99] border-none cursor-pointer shadow-lg shadow-primary/20 disabled:opacity-60 disabled:cursor-not-allowed;
+  @apply w-full flex items-center justify-between bg-primary text-white px-8 py-5 rounded-2xl font-black hover:bg-primary-container transition-all active:scale-[0.98] border-2 border-primary/20 cursor-pointer shadow-xl shadow-primary/25 disabled:opacity-60 disabled:cursor-not-allowed;
+  font-size: 14px;
 }
 
 .init-btn-primary__content {
