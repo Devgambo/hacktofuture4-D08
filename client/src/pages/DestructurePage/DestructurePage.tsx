@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logoSrc from '../../assets/logo.png';
+import cdArchImg from '../../assets/cd_architecture.png';
 import './DestructurePage.css';
 
 const TABS = [
@@ -99,7 +100,7 @@ export default function DestructurePage() {
                 <div className="dest-section-desc">
                   <div className="dest-workflow-box">
                     <h4 className="dest-workflow-title">THE EXECUTION PIPELINE</h4>
-                    <p className="text-on-surface-variant text-sm mb-8 leading-relaxed font-medium border-b border-outline-variant pb-6">
+                    <p className="text-on-surface-variant text-sm mb-8 leading-relaxed font-medium border-b border-outline-variant pb-6 text-left">
                       This is how we parse the repo to gain full contextual awareness. Our engine initiates a multi-pass deconstruction of the codebase to build a high-fidelity structural map.
                     </p>
                     <ul className="dest-workflow-list">
@@ -124,7 +125,7 @@ export default function DestructurePage() {
                 </div>
               </div>
               
-              <div className="dest-grid">
+              <div className="dest-grid -mt-8">
                 <div className="dest-card">
                   <div className="dest-card__num">01</div>
                   <h3 className="dest-card__title">rsi_file_map</h3>
@@ -156,11 +157,11 @@ export default function DestructurePage() {
               </div>
 
               <div className="dest-info-box mt-12 border-primary/40 bg-primary/5">
-                <div className="dest-info-box__header text-primary">
+                <div className="dest-info-box__header text-primary text-left">
                   <span className="material-symbols-outlined">database</span>
                   REPO SUMMARY (rsi_repo_summary)
                 </div>
-                <p className="dest-info-box__text">
+                <p className="dest-info-box__text text-left">
                   Post-indexing, we generate a high-level technical overview (Primary Language, Tech Stack, Entry Points). <strong>Stored in the rsi_repo_summary table</strong>, this context is passed to the AI engine on every deployment to ensure total awareness of the codebase structure.
                 </p>
               </div>
@@ -177,6 +178,18 @@ export default function DestructurePage() {
               </div>
 
               <div className="dest-row-grid">
+                <div className="dest-wide-card">
+                  <div className="dest-wide-card__icon">
+                    <span className="material-symbols-outlined">update</span>
+                  </div>
+                  <div>
+                    <h3 className="dest-wide-card__title">Delta Updates & SHA Tracking</h3>
+                    <p className="dest-wide-card__text">
+                      Incremental repository updates using SHA-based diffing. The system identifies changed files by comparing commit hashes, removing stale metadata and fetching only the modified chunks. This keeps the RSI context current without needing a full re-index.
+                    </p>
+                  </div>
+                </div>
+
                 <div className="dest-wide-card">
                   <div className="dest-wide-card__icon">
                     <span className="material-symbols-outlined">rate_review</span>
@@ -220,37 +233,51 @@ export default function DestructurePage() {
             <div className="dest-content animate-fade-in">
               <div className="dest-section-header">
                 <h2 className="dest-section-title">LOOSELY COUPLED DEPLOYMENT</h2>
-                <p className="dest-section-desc">
-                   A robust, multi-cloud integration layer designed to handle deployment signals from any major provider with zero vendor lock-in.
-                </p>
+                <div className="dest-section-desc">
+                  <p>
+                    A robust, multi-cloud integration layer designed to handle deployment signals from any major provider with zero vendor lock-in.
+                  </p>
+                </div>
               </div>
 
-              <div className="dest-cd-visual">
-                <div className="dest-cloud-grid">
-                  <div className="dest-cloud-node">AZURE</div>
-                  <div className="dest-cloud-node">GCP</div>
-                  <div className="dest-cloud-node">AWS</div>
-                </div>
-                
-                <div className="dest-flow-line">
-                  <div className="dest-flow-label">WEBHOOK + CD_SECRET</div>
-                  <div className="dest-flow-arrow"></div>
-                </div>
-
-                <div className="dest-engine-core">
-                  <div className="dest-engine-core__glitch"></div>
-                  EASY_OPS ENGINE
+              <div 
+                className="dest-cd-frame cursor-pointer group relative" 
+                onClick={() => window.open(cdArchImg, '_blank')}
+              >
+                <img src={cdArchImg} alt="CD Architecture" className="dest-cd-img" />
+                <div className="dest-cd-overlay">
+                  <span className="material-symbols-outlined">open_in_new</span>
+                  <span>VIEW_FULL_ARCHITECTURE</span>
                 </div>
               </div>
 
               <div className="dest-info-box mt-12 bg-primary/10 border-primary/30">
-                <div className="dest-info-box__header text-primary">
+                <div className="dest-info-box__header text-primary text-left">
                   <span className="material-symbols-outlined">security</span>
-                  SECURE WEBHOOK ORCHESTRATION
+                  SECURE MULTI-PROVIDER INTERACTION
                 </div>
-                <p className="dest-info-box__text">
-                  We implement a loosely coupled structure that handles failures via webhooks. Signals from Azure, GCP, or AWS must include a validated 'cd_secret', triggering our pipeline to spin up repair environments instantly.
-                </p>
+                <div className="dest-info-box__text text-left space-y-6">
+                  <p>
+                    Our <strong>Loosely Coupled</strong> architecture is built on a "Universal Listener" pattern. Instead of building rigid, provider-specific plugins, we use a standardized webhook interface that adapts to the heartbeat of any cloud environment.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-surface-container-lowest/50 p-4 rounded-xl border border-outline-variant/30">
+                      <h4 className="font-headline font-black text-xs text-primary mb-2">SECRET HANDSHAKE</h4>
+                      <p className="text-xs leading-relaxed opacity-80">Every provider interaction is secured via a unique 'cd_secret'. This creates a trust-layer where signals from AWS, Azure, or GCP are validated before reaching the engine.</p>
+                    </div>
+                    <div className="bg-surface-container-lowest/50 p-4 rounded-xl border border-outline-variant/30">
+                      <h4 className="font-headline font-black text-xs text-primary mb-2">AGNOSTIC REPAIR</h4>
+                      <p className="text-xs leading-relaxed opacity-80">The system deconstructs failures independently of the host. A broken Lambda is treated with the same structural rigor as a failing Azure Function.</p>
+                    </div>
+                    <div className="bg-surface-container-lowest/50 p-4 rounded-xl border border-outline-variant/30">
+                      <h4 className="font-headline font-black text-xs text-primary mb-2">EXTENSIBLE CORE</h4>
+                      <p className="text-xs leading-relaxed opacity-80">New providers can be linked by simply mapping their webhook schema to our internal pulse format, allowing for infinite scalability across the cloud landscape.</p>
+                    </div>
+                  </div>
+                  <p className="pt-4 border-t border-outline-variant/20 italic text-sm">
+                    This decoupling ensures that EasyOps remains the central orchestration brain, while the cloud providers act merely as the execution endpoints.
+                  </p>
+                </div>
               </div>
             </div>
           )}
