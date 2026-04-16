@@ -58,91 +58,73 @@ export default function AboutUsPage() {
         </div>
       </section>
 
-      <section className="about-details">
-        <div className="about-grid">
-          <div className="about-card group">
-            <div className="about-card__icon">
-              <span className="material-symbols-outlined">psychology</span>
-            </div>
-            <h3 className="about-card__title">The Vision</h3>
-            <p className="about-card__desc">
-              We envision a deterministic future where agents assist in resolving intricate deployment issues instantly. We turn downtime into uptime, fast.
-            </p>
-          </div>
-          <div className="about-card group">
-            <div className="about-card__icon">
-              <span className="material-symbols-outlined">group</span>
-            </div>
-            <h3 className="about-card__title">The Team</h3>
-            <p className="about-card__desc">
-              Developed by a small collective of rigorous engineers tired of fragile CI/CD systems, committed to reliable, AI-driven automation workflows.
-            </p>
-          </div>
-          <div className="about-card group">
-            <div className="about-card__icon">
-              <span className="material-symbols-outlined">code_blocks</span>
-            </div>
-            <h3 className="about-card__title">Open Architecture</h3>
-            <p className="about-card__desc">
-              Transparency at the core. Our approach guarantees predictable results with verifiable workflows that easily integrate into your GitHub environments.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="feature-section mt-64">
+      <section className="feature-section mt-12">
         <div className="feature-section__grid">
-          <div className="featured-card group">
+          <div className="featured-card">
             <img 
-              src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80" 
-              alt="Cyber dashboard" 
+              src="https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&q=80" 
+              alt="Abstract brain architecture" 
               className="featured-card__img"
             />
             <div className="featured-card__gradient" />
             <div className="featured-card__content">
               <div className="featured-card__badge">
                 <span className="material-symbols-outlined featured-card__badge-icon">
-                  memory
+                  psychology
                 </span>
-                <span className="featured-card__badge-text">Core Infrastructure</span>
+                <span className="featured-card__badge-text">Core Intelligence</span>
               </div>
-              <h2 className="featured-card__title">Deterministic Pipeline Repairs.</h2>
+              <h2 className="featured-card__title">Episodic Memory Layer.</h2>
               <p className="featured-card__desc">
-                Deploying advanced AI to actively monitor your CI run traces and GitHub Webhooks. When failure strikes, EasyOps instantly kicks off an autonomous fix branch.
+                Our Memory Layer is the collective consciousness of your codebase. By converting every resolved issue into a high-dimensional vector, the engine builds a cumulative intelligence that identifies root causes before the first test even fails.
               </p>
             </div>
           </div>
           
           <div className="sidebar-cards">
-            <div className="resource-card group hover:border-primary/50 transition-colors">
-              <span className="material-symbols-outlined resource-card__icon group-hover:text-primary transition-colors">
-                speed
+            <div className="resource-card hover:border-primary/50 transition-colors">
+              <span className="material-symbols-outlined resource-card__icon text-primary transition-colors">
+                precision_manufacturing
               </span>
               <div>
-                <h3 className="resource-card__title">Low Latency Fixes</h3>
+                <h3 className="resource-card__title">Accurate Fix W/O Changing <br /> Business Logic</h3>
                 <p className="resource-card__text">
-                  Automatically spins up environments and generates PRS within seconds. 
+                  Leveraging RSI (Repo Structural Indexing) to ensure every fix aligns perfectly with your architecture.
                 </p>
               </div>
               <div className="resource-card__footer">
-                <span className="resource-card__metric">±10s</span>
-                <span className="resource-card__metric-label">Repair SLA</span>
+                <span className="resource-card__metric-label">Repair Latency</span>
               </div>
             </div>
 
             <div className="security-card bg-primary/15 border-primary/40 hover:bg-primary/25 shadow-[0_0_30px_-5px_var(--color-primary)] transition-all">
               <div className="security-card__icon-wrapper">
                 <div className="security-card__icon bg-primary shadow-lg shadow-primary/50">
-                  <span className="material-symbols-outlined">psychology</span>
+                  <span className="material-symbols-outlined">auto_fix_high</span>
                 </div>
                 <div>
-                  <div className="security-card__label text-primary font-black">Continuous Learning</div>
-                  <h3 className="security-card__title text-white drop-shadow-md">Memory Layer</h3>
+                  <div className="security-card__label text-primary font-black">Deterministic Repairs</div>
+                  <h3 className="security-card__title text-white drop-shadow-md">Autonomous Recovery</h3>
                 </div>
               </div>
               <p className="security-card__desc text-on-surface">
-                The longer you stay with it the smarter it will become - thanks to our dedicated memory layer keeping track of past fixes.
+                Instant fix branches generated upon CI failure. No guesswork—just structural, verifiable patches that bring your pipeline back to green.
               </p>
+            </div>
+
+            <div className="resource-card hover:border-tertiary/50 transition-colors border-tertiary/20">
+              <span className="material-symbols-outlined resource-card__icon text-tertiary transition-colors">
+                lan
+              </span>
+              <div>
+                <h3 className="resource-card__title">Multi-Cloud Heartbeat</h3>
+                <p className="resource-card__text">
+                  Loosely coupled orchestration for AWS, Azure, and GCP. Secure, secret-validated deployments.
+                </p>
+              </div>
+              <div className="resource-card__footer">
+                <span className="resource-card__metric-label">No Vendor Lock-in</span>
+              </div>
             </div>
           </div>
         </div>

@@ -132,10 +132,10 @@
 
 .arch-viewer__image {
   @apply max-w-full h-auto rounded-lg shadow-lg border border-outline-variant/30 transition-all duration-500;
-  @apply brightness-90 group-hover:brightness-100 group-hover:scale-[1.01];
+  @apply brightness-90 hover:brightness-100 hover:scale-[1.01];
 }
 
 .arch-viewer__overlay {
-  @apply absolute inset-0 flex flex-col items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg;
+  @apply absolute inset-0 flex flex-col items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-lg;
   @apply text-white font-headline font-black text-xs tracking-[0.3em] gap-3;
 }

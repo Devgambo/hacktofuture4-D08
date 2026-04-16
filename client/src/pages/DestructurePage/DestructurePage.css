@@ -197,11 +197,11 @@
 }
 
 .dest-cd-img {
-  @apply w-full h-auto object-contain transition-transform duration-700 group-hover:scale-[1.01];
+  @apply w-full h-auto object-contain transition-transform duration-700 hover:scale-[1.01];
 }
 
 .dest-cd-overlay {
-  @apply absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300;
+  @apply absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300;
   @apply text-white font-headline font-black text-xs tracking-[0.3em] gap-3;
 }
 

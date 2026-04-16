@@ -241,7 +241,7 @@ export default function DestructurePage() {
               </div>
 
               <div 
-                className="dest-cd-frame cursor-pointer group relative" 
+                className="dest-cd-frame cursor-pointer relative" 
                 onClick={() => window.open(cdArchImg, '_blank')}
               >
                 <img src={cdArchImg} alt="CD Architecture" className="dest-cd-img" />

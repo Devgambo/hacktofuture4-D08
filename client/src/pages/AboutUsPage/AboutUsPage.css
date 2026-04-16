@@ -112,7 +112,7 @@
 }
 
 .featured-card__img {
-  @apply absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-80;
+  @apply absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105 opacity-80;
 }
 
 .featured-card__gradient {
