@@ -1,0 +1,42 @@
+# Node.js
+node_modules
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+lerna-debug.log
+
+# Python
+.env
+.venv
+venv/
+*.pyc
+__pycache__/
+.pytest_cache/
+.eggs/
+*.egg-info/
+dist/
+build/
+
+# Logs
+logs
+*.log
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.claude
+
+# Frontend
+dist
+dist-ssr
+*.local
+server/repo_tokens.json
+server/sessions.json
+server/webhook_store.json
