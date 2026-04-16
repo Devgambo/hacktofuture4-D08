@@ -1,0 +1,57 @@
+@reference "../../styles/globals.css";
+
+.topbar {
+  @apply h-16 flex items-center justify-between px-8 bg-[color-mix(in_srgb,var(--color-surface-bright)_80%,transparent)] backdrop-blur-md sticky top-0 z-30 border-b border-outline-variant/30;
+}
+
+.topbar__breadcrumb {
+  @apply flex items-center gap-4 text-sm font-medium tracking-tight;
+}
+
+.topbar__breadcrumb-path {
+  @apply text-on-surface-variant;
+}
+
+.topbar__breadcrumb-sep {
+  @apply text-outline-variant;
+}
+
+.topbar__breadcrumb-current {
+  @apply text-on-surface font-semibold;
+}
+
+.topbar__actions {
+  @apply flex items-center gap-4;
+}
+
+.topbar__notify-btn {
+  @apply w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors border-none bg-transparent cursor-pointer;
+}
+
+.topbar__notify-icon {
+  @apply text-on-surface-variant;
+}
+
+.topbar__divider {
+  @apply h-8 w-px bg-outline-variant mx-2;
+}
+
+.topbar__profile {
+  @apply flex items-center gap-3;
+}
+
+.topbar__profile-info {
+  @apply text-right;
+}
+
+.topbar__profile-name {
+  @apply text-xs font-bold text-on-surface;
+}
+
+.topbar__profile-role {
+  @apply text-[10px] text-on-surface-variant uppercase tracking-widest;
+}
+
+.topbar__profile-img {
+  @apply w-8 h-8 rounded-full border border-outline-variant object-cover;
+}

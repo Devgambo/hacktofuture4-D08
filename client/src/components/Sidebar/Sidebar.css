@@ -1,0 +1,49 @@
+@reference "../../styles/globals.css";
+
+.sidebar {
+  @apply fixed left-0 top-0 h-full flex flex-col z-40 bg-[var(--color-surface-container-lowest)] border-r border-outline-variant w-64 tracking-tight text-sm;
+}
+
+.sidebar__header {
+  @apply p-6;
+}
+
+.sidebar__brand {
+  @apply flex items-center gap-2 mb-8 cursor-pointer;
+}
+
+.sidebar__logo-container {
+  @apply w-8 h-8 bg-primary flex items-center justify-center rounded text-white transition-transform group-hover:scale-105;
+}
+
+.sidebar__logo-icon {
+  font-variation-settings: 'FILL' 1;
+}
+
+.sidebar__title {
+  @apply text-lg font-black tracking-tighter text-primary m-0 leading-tight;
+}
+
+.sidebar__version {
+  @apply text-[10px] text-on-surface-variant font-medium tracking-widest uppercase m-0 leading-tight;
+}
+
+.sidebar__nav {
+  @apply space-y-1 flex flex-col gap-1;
+}
+
+.sidebar__nav-link {
+  @apply flex items-center gap-3 px-4 py-2 cursor-pointer transition-colors duration-150 rounded-md text-on-surface hover:text-primary hover:bg-surface-container-low no-underline;
+}
+
+.sidebar__nav-link--active {
+  @apply text-primary font-semibold border-r-4 border-primary bg-primary/10;
+}
+
+.sidebar__footer {
+  @apply mt-auto p-6 border-t border-outline-variant/50;
+}
+
+.sidebar__logout {
+  @apply flex items-center gap-3 w-full px-4 py-2 text-on-surface hover:text-primary hover:bg-surface-container-low cursor-pointer transition-colors duration-150 rounded-md border-none bg-transparent font-sans tracking-tight;
+}
