@@ -501,6 +501,61 @@ async def _handle_pull_request(payload: dict) -> None:
         await _notify_telegram(pr_failed(repo, pr_number, str(exc)), repo=repo)
 
 
+async def _handle_cd_failure(payload: dict, job_id: str) -> None:
+    """Run the CD diagnosis LangGraph agent and send Telegram report."""
+    repo = payload.get("repo", "unknown")
+    service = payload.get("service", "unknown")
+    env = payload.get("environment", "unknown")
+    
+    _emit_event("cd_failure_started", {
+        "job_id": job_id,
+        "repo": repo,
+        "service": service,
+        "environment": env
+    })
+    
+    from messages import cd_failure_started, cd_failure_report
+    await _notify_telegram(cd_failure_started(repo, service, env), repo=repo)
+
+    try:
+        from agent.cd_monitor_graph import run_cd_diagnosis
+        result = await run_cd_diagnosis(payload)
+        
+        diagnosis = result.get("diagnosis", {})
+        
+        # Store in DB
+        from rsi import db
+        pool = await db.get_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO cd_failure_history 
+                (job_id, repo_full_name, service, environment, provider, status, error_message, error_logs, diagnosis, severity)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                """,
+                job_id, repo, service, env, 
+                payload.get("provider", "custom"),
+                payload.get("status", "failed"),
+                payload.get("error_message", ""),
+                payload.get("error_logs", ""),
+                json.dumps(diagnosis),
+                diagnosis.get("severity", "high")
+            )
+            
+        await _notify_telegram(cd_failure_report(repo, service, env, diagnosis), repo=repo)
+        
+        _emit_event("cd_diagnosis_completed", {
+            "job_id": job_id,
+            "repo": repo,
+            "status": "success"
+        })
+        
+    except Exception as e:
+        logger.exception(f"CD Diagnosis failed for {repo}")
+        await _notify_telegram(f"🚨 *CD Diagnosis Failed* \nError: {e}", repo=repo)
+        _emit_event("cd_diagnosis_failed", {"job_id": job_id, "error": str(e)})
+
+
 async def _handle_installation(payload: dict) -> None:
     """Cold-start RSI ingestion when a repo is first connected."""
     repos = payload.get("repositories", payload.get("repositories_added", []))
@@ -639,6 +694,24 @@ async def github_webhook(request: Request, background_tasks: BackgroundTasks):
             logger.info("Skipping PR webhook for agent branch: %s", head_ref)
             return {"status": "ignored", "event": event_type, "reason": "agent branch"}
 
+    elif event_type == "deployment_status":
+        state = payload.get("deployment_status", {}).get("state", "")
+        if state in ("failure", "error"):
+            # Convert to our standard format and process
+            cd_payload = {
+                "repo": payload.get("repository", {}).get("full_name"),
+                "service": payload.get("deployment", {}).get("task", "deploy"),
+                "environment": payload.get("deployment", {}).get("environment", "unknown"),
+                "status": "failed",
+                "provider": "custom",
+                "error_message": payload.get("deployment_status", {}).get("description", "Deployment failed"),
+                "commit_sha": payload.get("deployment", {}).get("sha", ""),
+                "triggered_by": "github-actions"
+            }
+            job_id = str(uuid.uuid4())
+            background_tasks.add_task(_handle_cd_failure, cd_payload, job_id)
+            return {"status": "accepted", "action": "cd_diagnosis", "job_id": job_id}
+
         default_branch = payload.get("repository", {}).get("default_branch", "main")
         if base_ref == default_branch:
             pr_number = pr.get("number", 0)
@@ -687,6 +760,34 @@ async def github_webhook(request: Request, background_tasks: BackgroundTasks):
 
     return {"status": "ignored", "event": event_type}
 
+
+@app.post("/api/webhooks/cd-failure")
+async def cd_failure_webhook(request: Request, background_tasks: BackgroundTasks):
+    """
+    Generic CD failure webhook — any pipeline can call this.
+    Validates X-CD-Webhook-Secret header, then dispatches to diagnosis agent.
+    """
+    settings = get_settings()
+    secret = request.headers.get("X-CD-Webhook-Secret", "")
+    
+    if not settings.cd_webhook_secret or secret != settings.cd_webhook_secret:
+        raise HTTPException(status_code=403, detail="Invalid CD webhook secret")
+        
+    try:
+        payload = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON payload")
+        
+    if "repo" not in payload or "service" not in payload:
+        raise HTTPException(status_code=400, detail="Payload must include 'repo' and 'service'")
+        
+    job_id = str(uuid.uuid4())
+    logger.info(f"Received CD Failure Webhook for {payload['repo']} ({payload['service']})")
+    
+    # Process asynchronously
+    background_tasks.add_task(_handle_cd_failure, payload, job_id)
+    
+    return {"status": "accepted", "job_id": job_id}
 
 @app.post("/api/webhooks/telegram")
 async def telegram_webhook(request: Request):
@@ -1104,3 +1205,97 @@ async def get_memory_stats_endpoint(request: Request):
     from memory.store import get_memory_stats
     stats = await get_memory_stats()
     return stats
+
+# ─────────────────────────────────────────────────────────
+# CD Monitoring API
+# ─────────────────────────────────────────────────────────
+
+@app.get("/api/cd/failures")
+async def get_cd_failures(request: Request):
+    """Return all stored CD failures."""
+    from auth import get_session
+    session = await get_session(request)
+    if not session:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    from rsi import db
+    pool = await db.get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("SELECT * FROM cd_failure_history ORDER BY created_at DESC LIMIT 50")
+    
+    # Format rows
+    results = []
+    for r in rows:
+        d = dict(r)
+        d["created_at"] = str(d["created_at"])
+        if isinstance(d["diagnosis"], str):
+            try:
+                d["diagnosis"] = json.loads(d["diagnosis"])
+            except:
+                pass
+        results.append(d)
+        
+    return {"failures": results}
+
+
+@app.post("/api/repos/{owner}/{repo}/cd-config")
+async def update_cd_config(owner: str, repo: str, request: Request):
+    """Update CD enrichment configuration for a repository."""
+    from auth import get_session
+    session = await get_session(request)
+    if not session:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+        
+    full_name = f"{owner}/{repo}"
+    body = await request.json()
+    provider = body.get("provider", "custom")
+    config = body.get("config", {})
+    enabled = body.get("enabled", True)
+
+    from rsi import db
+    pool = await db.get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            """
+            INSERT INTO cd_provider_config (repo_full_name, provider, config, enabled)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (repo_full_name) DO UPDATE SET
+                provider = EXCLUDED.provider,
+                config = EXCLUDED.config,
+                enabled = EXCLUDED.enabled,
+                updated_at = now()
+            """,
+            full_name, provider, json.dumps(config), enabled
+        )
+        
+    return {"status": "ok", "provider": provider}
+
+
+@app.get("/api/repos/{owner}/{repo}/cd-config")
+async def get_cd_config(owner: str, repo: str, request: Request):
+    """Return the currently configured CD enrichment config for a repository."""
+    from auth import get_session
+    session = await get_session(request)
+    if not session:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    full_name = f"{owner}/{repo}"
+
+    from rsi import db
+    pool = await db.get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT provider, config, enabled FROM cd_provider_config WHERE repo_full_name = $1", 
+            full_name
+        )
+    
+    if not row:
+        return {"provider": "custom", "config": {}, "enabled": True}
+        
+    d = dict(row)
+    if isinstance(d["config"], str):
+        try:
+            d["config"] = json.loads(d["config"])
+        except:
+            d["config"] = {}
+    return d

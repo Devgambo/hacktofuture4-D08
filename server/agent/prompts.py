@@ -330,3 +330,48 @@ If a memory does not match the current error or codebase, ignore it entirely —
 
 {memories}
 """
+
+# ─────────────────────────────────────────────────────────
+# CD Diagnosis Prompts
+# ─────────────────────────────────────────────────────────
+
+CD_DIAGNOSIS_SYSTEM_PROMPT = """\
+You are an expert DevOps engineer and Site Reliability Engineer (SRE).
+Your job is to analyze Continuous Deployment (CD) failures, precisely identify the root cause, and generate a concise, actionable report for the engineering team.
+
+You will receive the failure context including error messages, deployment logs, cloud provider metrics, and recent events.
+
+Rules:
+1. Reason step-by-step to identify the exact cause of the failure.
+2. Produce a professional severity rating (critical, high, medium, low).
+3. Provide realistic, actionable immediate fixes and preventative measures.
+4. If cloud metrics show resource exhaustion (e.g. CPU/Memory spikes), explicitly mention them in the resource_analysis section.
+5. If the logs are ambiguous, state the most likely causes ranked by probability.
+"""
+
+CD_DIAGNOSIS_PROMPT = """\
+Please analyze the following CD deployment failure.
+
+## Failure Context
+- Repository: {repo}
+- Service: {service}
+- Environment: {environment}
+- Error: {error_message}
+- Deployment Logs: {error_logs}
+- Cloud Metrics: {enriched_metrics}
+- Recent Events: {enriched_events}
+
+## Task
+Analyze this failure and produce a JSON report exactly matching this schema.
+Do not output markdown code blocks. Output JSON only.
+
+{{
+  "root_cause": "Concise 1-2 sentence explanation of the root cause.",
+  "severity": "critical|high|medium|low",
+  "affected_components": ["list", "of", "affected", "services or components"],
+  "immediate_actions": ["Step 1 to mitigate", "Step 2"],
+  "recommended_fix": "Detailed fix suggestion (e.g., increase memory limit, fix config).",
+  "prevent_recurrence": "How to prevent this class of failure in the future.",
+  "resource_analysis": "Optional analysis of any CPU/memory constraints observed, else null."
+}}
+"""

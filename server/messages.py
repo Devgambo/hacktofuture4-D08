@@ -271,3 +271,70 @@ def cold_start_failed(repo: str, error_text: str) -> str:
             f"*Error:* {_md_escape(short_error)}",
         ]
     )
+
+
+# ─────────────────────────────────────────────────────────
+# CD Failure Reporting
+# ─────────────────────────────────────────────────────────
+
+def cd_failure_started(repo: str, service: str, environment: str) -> str:
+    """⚙️ CD failure detected — diagnosis agent started."""
+    return "\n".join(
+        [
+            "*⚙️ CD Failure Detected — Diagnosing\\.\\.\\.*",
+            "",
+            f"*Repository:* {_md_escape(repo)}",
+            f"*Service:* {_md_escape(service)}",
+            f"*Environment:* {_md_escape(environment)}",
+            "*Status:* Gathering cloud logs & identifying root cause\\.\\.\\.",
+        ]
+    )
+
+def cd_failure_report(repo: str, service: str, environment: str, diagnosis: dict) -> str:
+    """🚨 CD DEPLOYMENT FAILED — full diagnostic report."""
+    severity = diagnosis.get("severity", "high").lower()
+    
+    # Emoji based on severity
+    if severity == "critical":
+        sev_icon = "🚨 CRITICAL"
+    elif severity == "high":
+        sev_icon = "🔴 HIGH"
+    elif severity == "medium":
+        sev_icon = "🟠 MEDIUM"
+    else:
+        sev_icon = "🟡 LOW"
+        
+    root_cause = diagnosis.get("root_cause", "Unknown")
+    recommended_fix = diagnosis.get("recommended_fix", "None")
+    
+    lines = [
+        f"*{sev_icon} \\| CD DEPLOYMENT FAILED*",
+        "",
+        f"*Repository:* {_md_escape(repo)}",
+        f"*Service:* {_md_escape(service)}",
+        f"*Environment:* {_md_escape(environment)}",
+        "",
+        f"*Root Cause:* {_md_escape(root_cause)}",
+    ]
+    
+    immediate_actions = diagnosis.get("immediate_actions", [])
+    if immediate_actions:
+        lines.append("")
+        lines.append("*Immediate Actions:*")
+        for action in immediate_actions:
+            lines.append(f"• {_md_escape(action)}")
+            
+    lines.extend([
+        "",
+        f"*Recommended Fix:* {_md_escape(recommended_fix)}",
+    ])
+    
+    prevent_recurrence = diagnosis.get("prevent_recurrence")
+    if prevent_recurrence:
+        lines.extend(["", f"*Prevention:* {_md_escape(prevent_recurrence)}"])
+        
+    resource_analysis = diagnosis.get("resource_analysis")
+    if resource_analysis and resource_analysis != "null":
+        lines.extend(["", f"*Resource Analysis:* {_md_escape(resource_analysis)}"])
+
+    return "\n".join(lines)
