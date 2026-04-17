@@ -80,6 +80,13 @@ Our autonomous LangGraph agent maps GitHub/CD webhook events to targeted workflo
 2. **PR Webhooks**: Upon PR creation/update, the review agent calculates a comprehensive score and coordinates GitHub Commit Statuses and Telegram gates.
 3. **CD Failure Hooks**: Detects deployment anomalies, pulling provider specific logs and prompting an LLM diagnosis, taking predefined rollback steps if severe.
 
+## 🧠 Agent Episodic Memory
+
+Rather than solving the same errors from scratch, the platform utilizes a pgvector-powered episodic memory system to "remember" successful past fixes.
+
+- **Continuous Learning:** When an agent successfully merges a fix for a CI failure, the original error trace, root cause, and the files changed are embedded into an `agent_memory` schema utilizing a `vector(1024)` HNSW index (via Cosine similarity).
+- **Dynamic Few-Shot RAG:** When a new CI failure occurs, the LangGraph agent queries this vector database against the new error signature. If a highly similar past scenario is found, it dynamically injects the previous successful methodology directly into its reasoning prompt, dramatically reducing resolution time and token usage.
+
 ## Preventing Vendor Lock-in (CD Monitoring)
 
 A major feature of this project is its robust abstraction layer for Continuous Deployment (CD) failures, completely decoupling the platform from any single cloud provider's proprietary webhook or logging ecosystem.
@@ -96,7 +103,5 @@ To feed the LangGraph agent with precise codebase context without blowing up the
 - `rsi_symbol_map`: Tracks the exact line boundaries of defined classes and functions to allow targeted, high-precision code retrieval.
 - `rsi_imports`: Acts as a dependency graph index. Traces module connections backward and forward to assess the blast radius of proposed code changes.
 - `rsi_repo_summary`: A high-level cache holding the tech stack footprint, global entry points, and project description, functioning as a lightweight `CLAUDE.md`.
-- `agent_memory`: Uses a **1024-dimensional pgvector HNSW index** mapped via Cosine similarity to store episodic memory. Past successful fixes ("error signature" to "root cause" mapping) are dynamically injected as few-shot prompts using RAG during future CI jobs.
-
+- `agent_memory`: Stores the HNSW vector embeddings of past successful CI fixes for episodic memory retrieval.
 ---
-*Built with ❤️ for Hack To Future 4 by Team BROKENCODE*
