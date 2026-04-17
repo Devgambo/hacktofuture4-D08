@@ -2,7 +2,7 @@
 
 DevOps Agent is an autonomous CI/CD pipeline monitor, PR reviewer, and issue fixer powered by LangChain and LangGraph. Built for modern DevOps workflows, it seamlessly integrates with GitHub to automatically analyze CI failures, review Pull Requests based on a custom scoring system, and monitor CD pipelines across multiple cloud providers (AWS, GCP, Azure).
 
-## 🚀 Features
+## Features
 
 - **Autonomous CI Fixer**: Automatically detects CI workflow failures via GitHub webhooks, triggers an AI agent (GPT-4o) to trace the root cause using the Repository Structure Index (RSI), and generates a fix Pull Request autonomously.
 - **Intelligent PR Reviews**: Three-tier quality gate for Pull Requests:
@@ -15,10 +15,10 @@ DevOps Agent is an autonomous CI/CD pipeline monitor, PR reviewer, and issue fix
 - **Multi-Tenant OAuth**: Secure, per-user GitHub OAuth token integration for handling GitHub MCP operations and repository webhooks in isolation.
 
 ## Architecture
+<img width="6548" height="2766" alt="fossflow-export-2026-04-16T17_33_18 977Z" src="https://github.com/user-attachments/assets/88bad79f-94b5-40d3-89a1-820b7f0eb261" />
 
 
-
-## 🏗️ Technology Stack
+## Technology Stack
 
 **Backend:**
 - Python 3.13+, FastAPI, Uvicorn
@@ -31,7 +31,7 @@ DevOps Agent is an autonomous CI/CD pipeline monitor, PR reviewer, and issue fix
 - Tailwind CSS 4
 - React Router
 
-## 🛠️ Setup & Installation
+## Setup & Installation
 
 ### Prerequisites
 - Python 3.13+
@@ -72,7 +72,7 @@ DevOps Agent is an autonomous CI/CD pipeline monitor, PR reviewer, and issue fix
    npm run dev
    ```
 
-## 🧠 Architecture Overview
+## Architecture Overview
 
 Our autonomous LangGraph agent maps GitHub/CD webhook events to targeted workflows:
 1. **CI Webhooks**: On failure, the system reads repo RSI, diagnoses the trace, and opens a new PR with a fix.
@@ -80,7 +80,7 @@ Our autonomous LangGraph agent maps GitHub/CD webhook events to targeted workflo
 2. **PR Webhooks**: Upon PR creation/update, the review agent calculates a comprehensive score and coordinates GitHub Commit Statuses and Telegram gates.
 3. **CD Failure Hooks**: Detects deployment anomalies, pulling provider specific logs and prompting an LLM diagnosis, taking predefined rollback steps if severe.
 
-## 🛡️ Preventing Vendor Lock-in (CD Monitoring)
+## Preventing Vendor Lock-in (CD Monitoring)
 
 A major feature of this project is its robust abstraction layer for Continuous Deployment (CD) failures, completely decoupling the platform from any single cloud provider's proprietary webhook or logging ecosystem.
 
@@ -88,7 +88,7 @@ A major feature of this project is its robust abstraction layer for Continuous D
 - **Normalized Context:** Whether the failure comes from AWS (CloudWatch/CodeDeploy), GCP (Cloud Logging), Azure (Monitor), or a custom internal webhook, it undergoes normalization into a standardized `CDFailureContext`. 
 - **LLM Agnostic Diagnosis:** Because the AI agent only interfaces with the abstracted `CDFailureContext` to diagnose errors and recommend rollbacks, teams can migrate across cloud providers without changing their root-cause analysis pipelines.
 
-## 🗄️ RSI (Repository Structure Index) Schema
+## RSI (Repository Structure Index) Schema
 
 To feed the LangGraph agent with precise codebase context without blowing up the LLM token limit, our RSI system maps the entire codebase into a vector-backed PostgreSQL schema:
 
