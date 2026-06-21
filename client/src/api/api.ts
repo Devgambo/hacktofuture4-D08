@@ -6,7 +6,7 @@
 const API_BASE = 'http://localhost:8000';
 
 const fetchOpts: RequestInit = {
-  credentials: 'include', // send session cookie
+  credentials: 'include',
 };
 
 // ── Response Types ─────────────────────────────────────────────────────────
