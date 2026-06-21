@@ -1,0 +1,14 @@
+# Replace api.example.com with your backend subdomain (DNS A record → EC2 IP).
+# Caddy obtains and renews a Let's Encrypt TLS cert automatically.
+api.example.com {
+	# Proxy everything to the FastAPI container. Caddy streams responses
+	# (including SSE on /api/events) without extra buffering config.
+	reverse_proxy server:8000
+
+	# Cap request bodies as defence-in-depth (app also caps webhook bodies).
+	request_body {
+		max_size 5MB
+	}
+
+	encode gzip
+}

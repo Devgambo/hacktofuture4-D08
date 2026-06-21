@@ -81,6 +81,7 @@ export default function InitRepoScreen() {
               <input
                 type="text"
                 className="init-search__input"
+                aria-label="Search repositories"
                 placeholder="Search repositories (e.g. facebook/react)..."
                 value={searchQuery}
                 onFocus={() => setIsFocused(true)}

@@ -76,7 +76,7 @@ async def github_login():
 
     params = {
         "client_id": settings.github_client_id,
-        "redirect_uri": "http://localhost:8000/api/auth/callback",
+        "redirect_uri": f"{settings.public_base_url.rstrip('/')}/api/auth/callback",
         "scope": OAUTH_SCOPES,
         "state": state,
     }
@@ -192,15 +192,21 @@ async def github_callback(code: str, state: str | None = None):
     logger.info("User %s logged in (session %s, %d repos)", user_info.get("login"), session_id, len(repos))
 
     # 5. Set cookie and redirect to frontend
-    response = RedirectResponse(url="http://localhost:5173/home", status_code=302)
-    # S5: secure=True in production (HTTPS), False for localhost dev
+    response = RedirectResponse(
+        url=f"{settings.frontend_base_url.rstrip('/')}/home", status_code=302
+    )
+    # S5: secure=True in production (HTTPS), False for localhost dev.
+    # SameSite policy is configurable for cross-site (Vercel + AWS) setups.
+    samesite = settings.cookie_samesite.lower()
+    # SameSite=None is only valid on a Secure cookie.
+    secure = settings.is_production or samesite == "none"
     response.set_cookie(
         key=SESSION_COOKIE,
         value=session_id,
         httponly=True,
-        samesite="lax",
+        samesite=samesite,  # type: ignore[arg-type]
         max_age=86400 * 7,  # 7 days
-        secure=settings.is_production,
+        secure=secure,
     )
     return response
 
@@ -237,8 +243,17 @@ async def logout(request: Request, response: Response):
                 logger.info("Cleaned up %d webhooks on logout", deleted)
             except Exception as e:
                 logger.warning("Webhook cleanup failed: %s", e)
+            # C4: drop the cached MCP client so its npx subprocess can be reaped
+            # and the cache doesn't grow unbounded across logins.
+            try:
+                from agent.tools import invalidate_mcp_client
+                invalidate_mcp_client(token)
+            except Exception as e:
+                logger.warning("MCP client invalidation failed: %s", e)
         await delete_session(session_id)
 
-    response = RedirectResponse(url="http://localhost:5173", status_code=302)
+    response = RedirectResponse(
+        url=get_settings().frontend_base_url.rstrip("/"), status_code=302
+    )
     response.delete_cookie(SESSION_COOKIE)
     return response

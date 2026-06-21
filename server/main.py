@@ -11,7 +11,6 @@ import logging
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import AsyncGenerator
 
 from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
@@ -91,10 +90,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — allow the React dev server (with credentials for cookies)
+# CORS — origins from CORS_ORIGINS (comma-separated), with credentials for cookies.
+# Defaults to the React dev servers when unset.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174"],
+    allow_origins=get_settings().allowed_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -262,10 +262,51 @@ async def _handle_push_to_main(payload: dict) -> None:
         logger.exception("RSI delta update failed for %s", repo)
         _emit_event("rsi_update_failed", {"repo": repo, "error": str(e)})
 
+# H4: cap webhook request bodies to avoid memory exhaustion / DoS.
+MAX_WEBHOOK_BODY_BYTES = 2_000_000  # 2 MB
+# H4: cap CD error logs stored/processed so a huge payload can't blow up memory.
+MAX_CD_LOG_CHARS = 100_000
+
+
+async def _read_capped_body(request: Request, max_bytes: int = MAX_WEBHOOK_BODY_BYTES) -> bytes:
+    """Read a request body, rejecting anything over max_bytes with HTTP 413.
+
+    Checks the Content-Length header first (cheap reject), then verifies the
+    actual bytes read in case the header is absent or lying.
+    """
+    content_length = request.headers.get("content-length")
+    if content_length is not None:
+        try:
+            if int(content_length) > max_bytes:
+                raise HTTPException(status_code=413, detail="Payload too large")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid Content-Length header")
+
+    body = await request.body()
+    if len(body) > max_bytes:
+        raise HTTPException(status_code=413, detail="Payload too large")
+    return body
+
+
+def _split_repo(repo: str) -> tuple[str, str]:
+    """Split an "owner/name" repo string, raising HTTP 400 on malformed input.
+
+    H3: guards against IndexError/ValueError 500s from inputs like "justname"
+    or "a/b/c".
+    """
+    parts = (repo or "").split("/")
+    if len(parts) != 2 or not parts[0] or not parts[1]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid repository name '{repo}'; expected 'owner/name'.",
+        )
+    return parts[0], parts[1]
+
+
 async def _post_commit_status(repo: str, sha: str, state: str, token: str, description: str = "") -> None:
     """Post a commit status to GitHub."""
     import httpx
-    owner, repo_name = repo.split("/")
+    owner, repo_name = _split_repo(repo)
     url = f"https://api.github.com/repos/{owner}/{repo_name}/statuses/{sha}"
     headers = {
         "Authorization": f"Bearer {token}",
@@ -635,7 +676,7 @@ async def github_webhook(request: Request, background_tasks: BackgroundTasks):
     settings = get_settings()
 
     # ── Verify signature ────────────────────────────────
-    body = await request.body()
+    body = await _read_capped_body(request)  # H4: reject oversized payloads
     signature = request.headers.get("X-Hub-Signature-256")
 
     if not _verify_signature(body, signature, settings.github_webhook_secret):
@@ -798,15 +839,20 @@ async def cd_failure_webhook(request: Request, background_tasks: BackgroundTasks
     
     if not settings.cd_webhook_secret or secret != settings.cd_webhook_secret:
         raise HTTPException(status_code=403, detail="Invalid CD webhook secret")
-        
+
+    body = await _read_capped_body(request)  # H4: reject oversized payloads
     try:
-        payload = await request.json()
-    except Exception:
+        payload = json.loads(body)
+    except (json.JSONDecodeError, ValueError):
         raise HTTPException(status_code=400, detail="Invalid JSON payload")
-        
+
     if "repo" not in payload or "service" not in payload:
         raise HTTPException(status_code=400, detail="Payload must include 'repo' and 'service'")
-        
+
+    # H4: truncate error logs on ingest so a huge payload can't blow up memory.
+    if payload.get("error_logs"):
+        payload["error_logs"] = str(payload["error_logs"])[:MAX_CD_LOG_CHARS]
+
     job_id = str(uuid.uuid4())
     logger.info(f"Received CD Failure Webhook for {payload['repo']} ({payload['service']})")
     
@@ -821,7 +867,11 @@ async def telegram_webhook(request: Request):
     if not telegram_notifier or not telegram_notifier.enabled:
         raise HTTPException(status_code=503, detail="Telegram notifier is not configured")
 
-    payload = await request.json()
+    body = await _read_capped_body(request)  # H4: reject oversized payloads
+    try:
+        payload = json.loads(body)
+    except (json.JSONDecodeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid JSON payload")
     secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token")
 
     try:
@@ -947,22 +997,24 @@ async def event_stream(request: Request):
 async def get_webhook_url(request: Request):
     """Return the currently configured webhook base URL."""
     from auth import get_session
+    from webhook_manager import get_effective_webhook_base_url
     session = await get_session(request)
     if not session:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    settings = get_settings()
-    return {"webhook_base_url": settings.webhook_base_url}
+    return {"webhook_base_url": await get_effective_webhook_base_url()}
 
 
 @app.post("/api/settings/webhook-url")
 async def set_webhook_url(request: Request):
     """
     Update the webhook base URL at runtime (e.g. after starting ngrok).
-    Persists to .env and clears the settings cache.
+    H2: persisted in the DB (app_settings) — no more blocking .env rewrites,
+    so this works on read-only container filesystems and never blocks the loop.
     NOTE: In a multi-user deployment this should be restricted to admin users.
     For now all authenticated users can change it, but every change is audit-logged.
     """
     from auth import get_session
+    from state_store import set_app_setting
     session = await get_session(request)
     if not session:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -981,32 +1033,7 @@ async def set_webhook_url(request: Request):
         new_url, caller_login,
     )
 
-    # B10: use an absolute path derived from this file's location so the
-    # correct .env is updated regardless of the process working directory
-    env_path = Path(__file__).parent / ".env"
-    lines = []
-    found = False
-    try:
-        with open(env_path, "r") as f:
-            lines = f.readlines()
-    except FileNotFoundError:
-        pass
-
-    new_lines = []
-    for line in lines:
-        if line.strip().startswith("WEBHOOK_BASE_URL"):
-            new_lines.append(f"WEBHOOK_BASE_URL={new_url}\n")
-            found = True
-        else:
-            new_lines.append(line)
-    if not found:
-        new_lines.append(f"WEBHOOK_BASE_URL={new_url}\n")
-
-    with open(env_path, "w") as f:
-        f.writelines(new_lines)
-
-    # Clear the cached settings so the new value is picked up
-    get_settings.cache_clear()
+    await set_app_setting("webhook_base_url", new_url)
 
     return {"status": "ok", "webhook_base_url": new_url}
 
@@ -1140,7 +1167,7 @@ async def _handle_merged_fix_pr(payload: dict) -> None:
         # 2. Fetch the list of changed files from the PR
         import httpx
         async with httpx.AsyncClient(timeout=30) as client:
-            owner, repo_name = repo.split("/")
+            owner, repo_name = repo.split("/", 1)
             files_resp = await client.get(
                 f"https://api.github.com/repos/{owner}/{repo_name}/pulls/{pr_number}/files",
                 headers={
@@ -1257,8 +1284,8 @@ async def get_cd_failures(request: Request):
         if isinstance(d["diagnosis"], str):
             try:
                 d["diagnosis"] = json.loads(d["diagnosis"])
-            except:
-                pass
+            except (json.JSONDecodeError, ValueError, TypeError) as e:
+                logger.warning("Failed to parse stored diagnosis JSON: %s", e)
         results.append(d)
         
     return {"failures": results}
@@ -1322,6 +1349,7 @@ async def get_cd_config(owner: str, repo: str, request: Request):
     if isinstance(d["config"], str):
         try:
             d["config"] = json.loads(d["config"])
-        except:
+        except (json.JSONDecodeError, ValueError, TypeError) as e:
+            logger.warning("Failed to parse stored cd-config JSON for %s: %s", full_name, e)
             d["config"] = {}
     return d

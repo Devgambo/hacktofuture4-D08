@@ -28,6 +28,12 @@ def _derive_fernet() -> Fernet:
     settings = get_settings()
     raw_key = settings.token_encryption_key.strip()
     if not raw_key:
+        if settings.is_production:
+            raise RuntimeError(
+                "TOKEN_ENCRYPTION_KEY must be set in production. Generate one with: "
+                'python -c "from cryptography.fernet import Fernet; '
+                'print(Fernet.generate_key().decode())"'
+            )
         raw_key = "|".join(
             [
                 settings.database_url,
@@ -48,6 +54,28 @@ def encrypt_token(token: str) -> str:
 
 def decrypt_token(token_ciphertext: str) -> str:
     return _derive_fernet().decrypt(token_ciphertext.encode("utf-8")).decode("utf-8")
+
+
+async def get_app_setting(key: str) -> str | None:
+    """Return an app-wide runtime setting value, or None if unset (H2)."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        return await conn.fetchval("SELECT value FROM app_settings WHERE key = $1", key)
+
+
+async def set_app_setting(key: str, value: str) -> None:
+    """Upsert an app-wide runtime setting (H2 — replaces .env rewriting)."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            """
+            INSERT INTO app_settings (key, value, updated_at)
+            VALUES ($1, $2, now())
+            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()
+            """,
+            key,
+            value,
+        )
 
 
 def _json_value(value: Any, default: Any) -> Any:

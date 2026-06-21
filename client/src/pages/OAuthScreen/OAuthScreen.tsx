@@ -4,7 +4,6 @@ import './OAuthScreen.css';
 
 export default function OAuthScreen() {
   const { user } = useAuth();
-  const error = null;
 
   return (
     <div className="oauth-page">
@@ -17,13 +16,6 @@ export default function OAuthScreen() {
               <h1 className="oauth-header__title">Integrations</h1>
             </div>
           </div>
-
-          {error && (
-            <div className="bg-error-container text-on-error-container p-4 rounded-xl border border-error/20 flex gap-3 items-center mb-6">
-              <span className="material-symbols-outlined">error</span>
-              <span className="font-bold text-sm tracking-tight">{error}</span>
-            </div>
-          )}
 
           <div className="integration-grid">
             {/* GitHub Integration Card */}

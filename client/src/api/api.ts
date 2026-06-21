@@ -3,11 +3,29 @@
  * TypeScript port of api.js — adds full type safety and proper error handling.
  */
 
-const API_BASE = 'http://localhost:8000';
+// Driven by VITE_API_BASE at build time. Empty string → same-origin (relative
+// /api calls), which is how the nginx-served production build talks to the
+// backend. Falls back to the local dev backend when unset.
+export const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000';
 
 const fetchOpts: RequestInit = {
   credentials: 'include',
 };
+
+/**
+ * M1: shared error handling. Throws an Error with the server's `detail`
+ * message when present, falling back to the HTTP status text.
+ */
+async function handleFetchError(res: Response, fallback: string): Promise<never> {
+  let detail: string | undefined;
+  try {
+    const body = await res.json();
+    detail = (body as { detail?: string }).detail;
+  } catch {
+    /* non-JSON body */
+  }
+  throw new Error(detail ?? res.statusText ?? fallback);
+}
 
 // ── Response Types ─────────────────────────────────────────────────────────
 
@@ -21,7 +39,7 @@ export interface User {
 
 export interface AuthContextData {
   user: User;
-  repos: any[];
+  repos: UserRepo[];
 }
 
 export interface Job {
@@ -97,6 +115,8 @@ export async function fetchCurrentUser(): Promise<AuthContextData> {
   return res.json() as Promise<AuthContextData>;
 }
 
+// Note: most calls below route errors through handleFetchError (M1).
+
 export async function logout(): Promise<void> {
   await fetch(`${API_BASE}/api/auth/logout`, {
     method: 'POST',
@@ -117,6 +137,7 @@ export async function fetchJobs(): Promise<Job[]> {
 
 export async function fetchHealth(): Promise<HealthStatus> {
   const res = await fetch(`${API_BASE}/health`, fetchOpts);
+  if (!res.ok) await handleFetchError(res, `Health check failed: ${res.status}`);
   return res.json() as Promise<HealthStatus>;
 }
 
@@ -132,7 +153,7 @@ export async function initializeRepo(repoFullName: string): Promise<MonitoredRep
     `${API_BASE}/api/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repoName)}/initialize`,
     { method: 'POST', ...fetchOpts }
   );
-  if (!res.ok) throw new Error(`Failed to initialize repo: ${res.status}`);
+  if (!res.ok) await handleFetchError(res, `Failed to initialize repo: ${res.status}`);
   return res.json() as Promise<MonitoredRepo>;
 }
 
@@ -140,7 +161,7 @@ export async function initializeRepo(repoFullName: string): Promise<MonitoredRep
 
 export async function fetchMonitoredRepos(): Promise<MonitoredRepo[]> {
   const res = await fetch(`${API_BASE}/api/repos/monitored`, fetchOpts);
-  if (!res.ok) throw new Error(`Failed to fetch monitored repos: ${res.status}`);
+  if (!res.ok) await handleFetchError(res, `Failed to fetch monitored repos: ${res.status}`);
   const data = await res.json() as { repos: MonitoredRepo[] } | MonitoredRepo[];
   return Array.isArray(data) ? data : (data as { repos: MonitoredRepo[] }).repos ?? [];
 }
@@ -152,7 +173,7 @@ export async function removeMonitoredRepo(repoFullName: string): Promise<{ messa
     `${API_BASE}/api/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repoName)}/monitoring`,
     { method: 'DELETE', ...fetchOpts }
   );
-  if (!res.ok) throw new Error(`Failed to remove repo: ${res.status}`);
+  if (!res.ok) await handleFetchError(res, `Failed to remove repo: ${res.status}`);
   return res.json() as Promise<{ message: string }>;
 }
 
@@ -174,15 +195,12 @@ export async function fetchWebhookUrl(): Promise<WebhookUrlSetting> {
 
 export async function updateWebhookUrl(webhookBaseUrl: string): Promise<WebhookUrlSetting> {
   const res = await fetch(`${API_BASE}/api/settings/webhook-url`, {
+    ...fetchOpts,   // spread first so explicit method/headers/body win
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ webhook_base_url: webhookBaseUrl }),
-    ...fetchOpts,
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({} as { detail?: string }));
-    throw new Error((err as { detail?: string }).detail ?? `Failed to update webhook URL: ${res.status}`);
-  }
+  if (!res.ok) await handleFetchError(res, `Failed to update webhook URL: ${res.status}`);
   return res.json() as Promise<WebhookUrlSetting>;
 }
 

@@ -28,6 +28,17 @@ class Settings(BaseSettings):
     # ── Webhook ─────────────────────────────────────────
     webhook_base_url: str = ""  # Public URL for webhook callbacks (e.g. ngrok)
 
+    # ── Public URLs (used for OAuth redirects + CORS) ───
+    # Public base URL of THIS backend, e.g. https://api.example.com
+    # Used to build the GitHub OAuth callback. Defaults to local dev.
+    public_base_url: str = "http://localhost:8000"
+    # Public base URL of the frontend, e.g. https://app.example.com
+    # Used for post-login / logout redirects. Defaults to local dev.
+    frontend_base_url: str = "http://localhost:5173"
+    # Comma-separated list of allowed CORS origins. When empty, defaults to the
+    # local Vite dev servers (see allowed_cors_origins).
+    cors_origins: str = ""
+
     # ── Database ────────────────────────────────────────
     database_url: str = ""
 
@@ -38,6 +49,13 @@ class Settings(BaseSettings):
     # ── App environment ─────────────────────────────────
     # Set to "production" to enable secure=True on session cookies (HTTPS only)
     app_env: str = "development"
+
+    # Session cookie SameSite policy: "lax" | "none" | "strict".
+    # Use "lax" when the frontend and backend share a registrable domain
+    # (e.g. app.example.com + api.example.com). Use "none" when they are on
+    # different sites (e.g. *.vercel.app frontend + AWS backend) so the browser
+    # sends the cookie on cross-site requests. "none" requires HTTPS (secure).
+    cookie_samesite: str = "lax"
 
     # ── Server ──────────────────────────────────────────
     log_level: str = "info"
@@ -83,6 +101,12 @@ class Settings(BaseSettings):
             except ValueError:
                 continue
         return parsed
+
+    @property
+    def allowed_cors_origins(self) -> list[str]:
+        """Parse comma-separated CORS_ORIGINS; fall back to local dev servers."""
+        origins = [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        return origins or ["http://localhost:5173", "http://localhost:5174"]
 
     @property
     def is_production(self) -> bool:

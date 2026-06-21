@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 
 import asyncpg
 from memory.embedder import embed_text, EMBEDDING_DIMENSIONS
-from rsi.db import get_pool, init_db
+from rsi.db import get_pool
 
 logger = logging.getLogger("devops_agent.memory.store")
 
@@ -29,8 +29,6 @@ async def store_memory(
     Generates an embedding of the combined knowledge text and inserts into agent_memory.
     Returns the memory ID.
     """
-    await init_db()
-
     # Build the text to embed — combines the error signature, root cause, and fix summary
     # so semantic search can match on any of these aspects
     knowledge_text = f"{error_signature}\n{root_cause}\n{fix_summary}"
@@ -109,8 +107,6 @@ async def search_memory(
     Uses pgvector cosine similarity (<=> operator).
     Returns the top_k most similar memories above the similarity threshold.
     """
-    await init_db()
-
     embedding = await embed_text(error_text)
     pool = await get_pool()
 
@@ -174,7 +170,6 @@ async def search_memory(
 
 async def get_memory_stats() -> dict:
     """Return high-level memory bank statistics."""
-    await init_db()
     pool = await get_pool()
 
     async with pool.acquire() as conn:
@@ -206,7 +201,6 @@ async def get_memory_stats() -> dict:
 
 async def get_all_memories(limit: int = 50) -> list[dict]:
     """Return all memories, newest first (for the dashboard)."""
-    await init_db()
     pool = await get_pool()
 
     async with pool.acquire() as conn:

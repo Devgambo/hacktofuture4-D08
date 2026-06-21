@@ -1,0 +1,60 @@
+# Single-host deployment: backend + frontend (nginx) + Postgres/pgvector.
+#
+# Prereqs:
+#   1. Create server/.env from server/.env.example. For this same-origin setup set:
+#        APP_ENV=production
+#        TOKEN_ENCRYPTION_KEY=<generated>            (required in production)
+#        DATABASE_URL=postgresql://easyops:STRONGPASS@postgres:5432/easyops
+#        PUBLIC_BASE_URL=https://<your-domain>       (OAuth callback host)
+#        FRONTEND_BASE_URL=https://<your-domain>
+#        CORS_ORIGINS=                               (empty → same-origin via nginx)
+#        WEBHOOK_BASE_URL=https://<your-domain>
+#   2. Point your GitHub OAuth App callback at https://<your-domain>/api/auth/callback
+#   3. Put TLS (Caddy/Traefik/host-nginx) in front of the `client` service for 443.
+#
+# To use managed Postgres (Neon) instead: delete the `postgres` service + its
+# depends_on/volume, and set DATABASE_URL to your Neon string (enable `vector`).
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: easyops
+      POSTGRES_PASSWORD: STRONGPASS
+      POSTGRES_DB: easyops
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U easyops"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    env_file: server/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "8000"
+    # Single replica only — shared state is in-process (see server/Dockerfile).
+    restart: unless-stopped
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+      args:
+        VITE_API_BASE: ""          # empty → same-origin /api via nginx
+    depends_on:
+      - server
+    ports:
+      - "80:80"
+    restart: unless-stopped
+
+volumes:
+  pgdata:

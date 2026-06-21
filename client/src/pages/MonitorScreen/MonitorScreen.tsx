@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import {
   fetchMonitoredRepos,
@@ -49,16 +50,21 @@ export default function MonitorScreen() {
   const [removingRepo, setRemovingRepo] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState('all');
   const logEndRef = useRef<HTMLDivElement>(null);
+  const eventSeq = useRef(0);  // monotonic id so React keys are stable as old events roll off
 
   // Fetch data on mount
   useEffect(() => {
     fetchMonitoredRepos()
       .then((data) => setMonitoredRepos(Array.isArray(data) ? data : []))
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err);
+        toast.error(err instanceof Error ? err.message : 'Failed to load monitored repositories');
+      })
       .finally(() => setIsLoadingRepos(false));
 
     const es = connectEventStream((event) => {
-      setEvents((prev) => [...prev.slice(-100), event]);
+      const withId = { ...event, _id: eventSeq.current++ };
+      setEvents((prev) => [...prev.slice(-100), withId]);
     });
 
     return () => es.close();
@@ -79,8 +85,10 @@ export default function MonitorScreen() {
     try {
       await removeMonitoredRepo(fullName);
       setMonitoredRepos((prev) => prev.filter((r) => r.full_name !== fullName));
+      toast.success(`Removed ${fullName} from monitoring`);
     } catch (err) {
       console.error('Failed to remove repo:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to remove repository');
     } finally {
       setRemovingRepo(null);
     }
@@ -171,13 +179,15 @@ export default function MonitorScreen() {
                         [SYSTEM] No {activeFilter !== 'all' ? activeFilter.toUpperCase() : ''} events captured.
                       </div>
                     ) : (
-                      filteredEvents.map((ev, i) => {
+                      filteredEvents.map((ev) => {
                         const meta = EVENT_META[ev.type] || { label: ev.type, category: 'ci', icon: 'webhook' };
-                        const evData = (ev.data ?? ev) as any;
+                        // SSE event payloads are intentionally dynamic (vary by event type).
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const evData = (ev.data ?? ev) as Record<string, any>;
                         const isReview = ev.type === 'pr_review_result';
 
                         return (
-                          <div key={i} className={`flex gap-4 p-2 rounded-lg transition-colors group ${isReview ? 'bg-surface-container-low border border-outline-variant/40 p-4 my-1' : 'hover:bg-surface-container-high/50'}`}>
+                          <div key={ev._id as number} className={`flex gap-4 p-2 rounded-lg transition-colors group ${isReview ? 'bg-surface-container-low border border-outline-variant/40 p-4 my-1' : 'hover:bg-surface-container-high/50'}`}>
                             <span className="w-20 shrink-0 opacity-70 font-mono text-[11px] mt-0.5">
                               [{ev.timestamp ? formatTime(ev.timestamp) : '??:??:??'}]
                             </span>

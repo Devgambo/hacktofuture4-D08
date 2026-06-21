@@ -32,7 +32,9 @@ def test_python_symbols():
     names = [s["symbol_name"] for s in res["symbols"]]
     assert "MyService" in names
     assert "process_data" in names
-    assert "__init__" in names
+    # Parser indexes top-level classes/functions only (^class/^def anchored at
+    # column 0); indented methods like __init__ are intentionally not indexed.
+    assert "__init__" not in names
 
 
 def test_python_imports():

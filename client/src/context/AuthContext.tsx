@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 import { fetchCurrentUser, logout as apiLogout } from '../api/api';
-import type { User } from '../api/api';
+import type { User, UserRepo } from '../api/api';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
 interface AuthContextValue {
   user: User | null;
-  repos: any[];
+  repos: UserRepo[];
   isLoading: boolean;
   isAuthenticated: boolean;
   refetch: () => Promise<void>;
@@ -22,7 +23,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [repos, setRepos] = useState<any[]>([]);
+  const [repos, setRepos] = useState<UserRepo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const refetch = useCallback(async (): Promise<void> => {
@@ -45,6 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await apiLogout();
     } catch (err) {
       console.error(err);
+      toast.error('Logout request failed — clearing local session anyway.');
     } finally {
       setUser(null);
       setRepos([]);

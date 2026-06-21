@@ -283,3 +283,14 @@ CREATE TABLE IF NOT EXISTS cd_failure_history (
     trigger_source  TEXT DEFAULT 'webhook',           -- webhook | github_deployment
     created_at      TIMESTAMPTZ DEFAULT now()
 );
+
+-- ─────────────────────────────────────────────────────────
+-- App-wide runtime settings (key/value)
+-- H2: replaces rewriting the .env file at runtime. Used for the
+-- webhook base URL that can be updated from the dashboard.
+-- ─────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS app_settings (
+    key         TEXT PRIMARY KEY,
+    value       TEXT NOT NULL DEFAULT '',
+    updated_at  TIMESTAMPTZ DEFAULT now()
+);

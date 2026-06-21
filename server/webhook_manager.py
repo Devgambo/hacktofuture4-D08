@@ -10,6 +10,7 @@ import httpx
 
 from state_store import (
     delete_webhook_id,
+    get_app_setting,
     get_repo_names_for_token,
     get_webhook_id as load_webhook_id,
     upsert_webhook_id,
@@ -18,6 +19,26 @@ from state_store import (
 logger = logging.getLogger("devops_agent.webhook_manager")
 
 GITHUB_API = "https://api.github.com"
+
+
+async def get_effective_webhook_base_url() -> str:
+    """Return the runtime webhook base URL.
+
+    H2: prefers the DB-stored value (set from the dashboard), falling back to
+    the WEBHOOK_BASE_URL env var. Replaces the old .env-rewriting approach.
+    """
+    db_value = await get_app_setting("webhook_base_url")
+    if db_value:
+        return db_value
+    return get_settings().webhook_base_url
+
+
+def _split_repo(repo_full_name: str) -> tuple[str, str]:
+    """Split "owner/name", raising ValueError on malformed input (H3)."""
+    parts = (repo_full_name or "").split("/")
+    if len(parts) != 2 or not parts[0] or not parts[1]:
+        raise ValueError(f"Invalid repository name '{repo_full_name}'; expected 'owner/name'.")
+    return parts[0], parts[1]
 
 
 async def get_webhook_id(repo_full_name: str) -> int | None:
@@ -35,9 +56,8 @@ async def create_webhook(
     Returns {"webhook_id": <id>, "created": True} on success,
     or {"webhook_id": <id>, "created": False} if one already exists.
     """
-    settings = get_settings()
-    webhook_base_url = settings.webhook_base_url
-    webhook_secret = settings.github_webhook_secret
+    webhook_base_url = await get_effective_webhook_base_url()
+    webhook_secret = get_settings().github_webhook_secret
 
     if not webhook_base_url:
         raise ValueError(
@@ -68,7 +88,7 @@ async def create_webhook(
         return {"webhook_id": dup_id, "created": False}
 
     # Create new webhook
-    owner, repo = repo_full_name.split("/")
+    owner, repo = _split_repo(repo_full_name)
     url = f"{GITHUB_API}/repos/{owner}/{repo}/hooks"
     headers = {
         "Authorization": f"Bearer {github_token}",
@@ -120,7 +140,7 @@ async def delete_webhook(
         logger.info("No webhook to delete for %s", repo_full_name)
         return False
 
-    owner, repo = repo_full_name.split("/")
+    owner, repo = _split_repo(repo_full_name)
     url = f"{GITHUB_API}/repos/{owner}/{repo}/hooks/{wh_id}"
     headers = {
         "Authorization": f"Bearer {github_token}",
@@ -165,7 +185,7 @@ async def _webhook_exists(
     repo_full_name: str, github_token: str, webhook_id: int
 ) -> bool:
     """Check if a specific webhook still exists on GitHub."""
-    owner, repo = repo_full_name.split("/")
+    owner, repo = _split_repo(repo_full_name)
     url = f"{GITHUB_API}/repos/{owner}/{repo}/hooks/{webhook_id}"
     headers = {
         "Authorization": f"Bearer {github_token}",
@@ -182,7 +202,7 @@ async def _find_existing_webhook(
     repo_full_name: str, github_token: str, callback_url: str
 ) -> int | None:
     """Search for an existing webhook pointing to our callback URL."""
-    owner, repo = repo_full_name.split("/")
+    owner, repo = _split_repo(repo_full_name)
     url = f"{GITHUB_API}/repos/{owner}/{repo}/hooks"
     headers = {
         "Authorization": f"Bearer {github_token}",
